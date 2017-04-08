@@ -42,6 +42,7 @@
 #ifndef __Browse3D_MainWindow_hpp__
 #define __Browse3D_MainWindow_hpp__
 
+#include "ImagePanel.hpp" //TEST TODO
 #include "Common.hpp"
 #include <wx/frame.h>
 
@@ -64,6 +65,7 @@ struct MainWindowUI
 
   ModelDisplay * model_display;
   wxNotebook * toolbox;
+  wxNotebook * test_tabbed_pane;
 
   wxListBox * points_table;
   wxTextCtrl * point_label;
@@ -99,6 +101,7 @@ class MainWindow : public wxFrame
       ID_GO_NEXT_FEATURES,
       ID_TOOLS_SCREENSHOT,
       ID_TOOLS_TOOLBOX,
+      ID_TOOLS_TEST_TABBED_PANE,
 
       ID_SEGMENT_LABEL,
       ID_SEGMENT_ADD,
@@ -202,9 +205,11 @@ class MainWindow : public wxFrame
 
     /** Toggle the visibility state of the toolbox. */
     void toggleToolboxVisible(wxEvent & event = DUMMY_EVENT);
+    void toggleTestTabbedPaneVisible(wxEvent & event = DUMMY_EVENT);
 
     /** Show/hide the toolbox. */
     void setToolboxVisible(wxCommandEvent & event);
+    void setTestTabbedPaneVisible(wxCommandEvent & event);
 
     /** Synchronize states of menu and toolbar buttons etc. */
     void updateUI(wxUpdateUIEvent & event);
@@ -218,6 +223,7 @@ class MainWindow : public wxFrame
 
     /** Show or hide the toolbox. */
     void setToolboxVisible(bool value);
+    void setTestTabbedPaneVisible(bool value);
 
     // Models
     Model * model;
@@ -226,6 +232,9 @@ class MainWindow : public wxFrame
     // Widgets
     MainWindowUI ui;
 
+    //TEST
+    wxImagePanel * drawPane; //TODO
+    wxFrame * drawFrame;
 }; // class MainWindow
 
 } // namespace Browse3D

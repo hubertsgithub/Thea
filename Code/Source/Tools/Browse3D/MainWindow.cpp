@@ -39,6 +39,7 @@
 //
 //============================================================================
 
+#include "ImagePanel.hpp"
 #include "MainWindow.hpp"
 #include "App.hpp"
 #include "Model.hpp"
@@ -71,6 +72,7 @@ static Real const MIN_SPLIT_SIZE     =   300;
 MainWindowUI::MainWindowUI()
 : model_display(NULL),
   toolbox(NULL),
+  test_tabbed_pane(NULL),
   points_table(NULL),
   point_label(NULL),
   point_snap_to_vertex(NULL),
@@ -112,6 +114,7 @@ MainWindow::init()
     rendering_menu->AppendSeparator();
     rendering_menu->AppendCheckItem(ID_VIEW_TWO_SIDED,         "&Two-sided lighting");
     rendering_menu->AppendCheckItem(ID_VIEW_FLAT_SHADING,      "&Flat shading");
+    rendering_menu->AppendCheckItem(ID_VIEW_FLAT_SHADING,      "TEST"); // TODO
   view_menu->AppendSubMenu(rendering_menu,  "&Rendering");
   view_menu->Append(ID_VIEW_FIT,            "&Fit view to model");
   menubar->Append(view_menu, "&View");
@@ -129,6 +132,8 @@ MainWindow::init()
   wxMenu * tools_menu = new wxMenu();
   tools_menu->Append(ID_TOOLS_SCREENSHOT,        "&Save screenshot");
   tools_menu->AppendCheckItem(ID_TOOLS_TOOLBOX,  "&Toolbox");
+  tools_menu->AppendCheckItem(ID_TOOLS_TEST_TABBED_PANE, "Test Tabbed Pane");
+
   menubar->Append(tools_menu, "&Tools");
 
   // About menu
@@ -156,6 +161,7 @@ MainWindow::init()
   toolbar->AddRadioTool(ID_VIEW_SHADED_WIREFRAME, "SW", wxNullBitmap, wxNullBitmap, "Shading + wireframe");
   toolbar->AddSeparator();
   toolbar->AddTool(ID_TOOLS_TOOLBOX, "Toolbox", wxNullBitmap, "Show/hide toolbox");
+  toolbar->AddTool(ID_TOOLS_TEST_TABBED_PANE, "Test Tabbed Pane", wxNullBitmap, "Show/hide test tabbed pane");
 
   toolbar->Realize();
 #endif
@@ -179,6 +185,8 @@ MainWindow::init()
 
   // A tabbed pane for the toolbox
   ui.toolbox = new wxNotebook(ui.main_splitter, wxID_ANY);
+  ui.test_tabbed_pane = new wxNotebook(ui.main_splitter, wxID_ANY);
+
 
   // Segment picking interface
   wxPanel * segments_panel = new wxPanel(ui.toolbox);
@@ -238,6 +246,8 @@ MainWindow::init()
 
   // The main UI is split into two panes
   ui.main_splitter->SplitVertically(ui.model_display, ui.toolbox, -MIN_SPLIT_SIZE);
+  ui.main_splitter->SplitVertically(ui.model_display, ui.test_tabbed_pane, -MIN_SPLIT_SIZE);
+
 
   // Do the top-level layout
   wxBoxSizer * main_sizer = new wxBoxSizer(wxVERTICAL);
@@ -265,6 +275,7 @@ MainWindow::init()
 
   Bind(wxEVT_MENU, &ModelDisplay::saveScreenshot, ui.model_display, ID_TOOLS_SCREENSHOT);
   Bind(wxEVT_MENU, &MainWindow::toggleToolboxVisible, this, ID_TOOLS_TOOLBOX);
+  Bind(wxEVT_MENU, &MainWindow::toggleTestTabbedPaneVisible, this, ID_TOOLS_TEST_TABBED_PANE);
 
   Bind(wxEVT_BUTTON, &MainWindow::expandPickedSegment, this, ID_SEGMENT_EXPAND);
   Bind(wxEVT_BUTTON, &MainWindow::contractPickedSegment, this, ID_SEGMENT_CONTRACT);
@@ -287,6 +298,8 @@ MainWindow::init()
   ui.points_table->Bind(wxEVT_MIDDLE_UP, &MainWindow::selectSample, this);
 
   ui.toolbox->Bind(wxEVT_NOTEBOOK_PAGE_CHANGED, &MainWindow::refreshDisplay, this);
+  ui.test_tabbed_pane->Bind(wxEVT_NOTEBOOK_PAGE_CHANGED, &MainWindow::refreshDisplay, this);
+
 
   model->Bind(EVT_MODEL_PATH_CHANGED, &MainWindow::setTitle, this);
   model->Bind(EVT_MODEL_NEEDS_SYNC_SAMPLES, &MainWindow::syncSamples, this);
@@ -344,6 +357,7 @@ MainWindow::init()
 
   // We have to both set the menu item and call the function since wxEVT_MENU is not generated without actually clicking
   tools_menu->FindItem(ID_TOOLS_TOOLBOX)->Check(false);   setToolboxVisible(false);
+  tools_menu->FindItem(ID_TOOLS_TEST_TABBED_PANE)->Check(false);    setTestTabbedPaneVisible(false);
   rendering_menu->FindItem(ID_VIEW_SHADED)->Check(true);  ui.model_display->renderShaded();
 
   rendering_menu->FindItem(ID_VIEW_TWO_SIDED)->Check(app().options().two_sided);
@@ -351,6 +365,17 @@ MainWindow::init()
 
   rendering_menu->FindItem(ID_VIEW_FLAT_SHADING)->Check(app().options().flat);
   ui.model_display->setFlatShading(app().options().flat);
+
+  //This is a separate window with an image in it.
+  //I think we can work with this to display the retrieved images
+  //What would be easier: display all in same window, or have arrow keys cycle? I think latter probably. But
+  //Have to learn events probably. TODO
+  wxBoxSizer* image_panel_sizer = new wxBoxSizer(wxHORIZONTAL);
+  drawFrame = new wxFrame(NULL, wxID_ANY, wxT("Here is a window"), wxPoint(50,50), wxSize(800,600));
+  drawPane = new wxImagePanel( drawFrame, wxT("/home/hlin/apple.jpg"), wxBITMAP_TYPE_JPEG);
+	image_panel_sizer->Add(drawPane, 1, wxSHAPED);
+  drawFrame->SetSizer(image_panel_sizer);
+  drawFrame->Show();
 
 /*
   setPickSegments(false);
@@ -710,9 +735,21 @@ MainWindow::toggleToolboxVisible(wxEvent & event)
 }
 
 void
+MainWindow::toggleTestTabbedPaneVisible(wxEvent &event)
+{
+  setTestTabbedPaneVisible(!ui.test_tabbed_pane->IsShown());
+}
+
+void
 MainWindow::setToolboxVisible(wxCommandEvent & event)
 {
   setToolboxVisible(event.IsChecked());
+}
+
+void
+MainWindow::setTestTabbedPaneVisible(wxCommandEvent &event)
+{
+  setTestTabbedPaneVisible(event.IsChecked());
 }
 
 void
@@ -727,6 +764,21 @@ MainWindow::setToolboxVisible(bool value)
   else
     ui.main_splitter->Unsplit(ui.toolbox);
 }
+
+void
+MainWindow::setTestTabbedPaneVisible(bool value)
+{
+  if (ui.test_tabbed_pane->IsShown() == value)
+    return;
+
+  ui.test_tabbed_pane->Show(value);
+  if (value)
+    ui.main_splitter->SplitVertically(ui.model_display, ui.test_tabbed_pane, -MIN_SPLIT_SIZE);
+  else
+    ui.main_splitter->Unsplit(ui.test_tabbed_pane);
+}
+
+
 
 void
 MainWindow::updateUI(wxUpdateUIEvent & event)
