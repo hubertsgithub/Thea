@@ -409,11 +409,9 @@ App::OnInit()
   THEA_CONSOLE << optsToString();
 
   wxImage::AddHandler(new wxPNGHandler);
-  wxInitAllImageHandlers(); // added for ImagePanel.. I think it's probably not the most necessary thing ever.
+  wxInitAllImageHandlers(); // added for ImagePanel.. I think it's probably not the most necessary thing ever (is there way to only init jpg image handler?).
 
   createMainWindow();
-
-
 
   // Load plugins and create a rendersystem
   loadPlugins();

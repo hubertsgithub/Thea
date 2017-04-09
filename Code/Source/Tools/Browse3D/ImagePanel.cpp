@@ -15,6 +15,7 @@ BEGIN_EVENT_TABLE(wxImagePanel, wxPanel)
  EVT_MOUSEWHEEL(wxImagePanel::mouseWheelMoved)
  */
 
+EVT_KEY_DOWN(wxImagePanel::keyPressed)
 // catch paint events
 EVT_PAINT(wxImagePanel::paintEvent)
 //Size event
@@ -34,6 +35,7 @@ END_EVENT_TABLE()
  void wxImagePanel::keyReleased(wxKeyEvent& event) {}
  */
 
+
 wxImagePanel::wxImagePanel(wxFrame* parent, wxString file, wxBitmapType format) :
 wxPanel(parent)
 {
@@ -42,6 +44,19 @@ wxPanel(parent)
     w = -1;
     h = -1;
 }
+
+void wxImagePanel::keyPressed(wxKeyEvent& event){
+    int key = event.GetKeyCode();
+    if (key == WXK_LEFT){
+      //wxImagePanel(this->parent, wxT("/home/hlin/orange.jpg"), wxBITMAP_TYPE_JPEG);
+      image.LoadFile(wxT("/home/hlin/orange.jpg"), wxBITMAP_TYPE_JPEG);
+      w = -1;
+      h = -1;
+      paintNow();
+      std::cerr << "Hi";
+    }
+}
+
 
 /*
  * Called by the system of by wxWidgets when the panel needs

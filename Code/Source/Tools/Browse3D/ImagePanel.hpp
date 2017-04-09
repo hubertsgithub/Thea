@@ -29,6 +29,7 @@ public:
      void keyPressed(wxKeyEvent& event);
      void keyReleased(wxKeyEvent& event);
      */
+    void keyPressed(wxKeyEvent& event);
 
     DECLARE_EVENT_TABLE()
 };

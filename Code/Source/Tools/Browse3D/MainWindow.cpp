@@ -276,6 +276,7 @@ MainWindow::init()
   Bind(wxEVT_MENU, &ModelDisplay::saveScreenshot, ui.model_display, ID_TOOLS_SCREENSHOT);
   Bind(wxEVT_MENU, &MainWindow::toggleToolboxVisible, this, ID_TOOLS_TOOLBOX);
   Bind(wxEVT_MENU, &MainWindow::toggleTestTabbedPaneVisible, this, ID_TOOLS_TEST_TABBED_PANE);
+  // TODO Bind(wxEVT_MENU, &MainWindow::toggleImagePanelVisible, this, ID_TOOLS_IMAGE_PANEL);
 
   Bind(wxEVT_BUTTON, &MainWindow::expandPickedSegment, this, ID_SEGMENT_EXPAND);
   Bind(wxEVT_BUTTON, &MainWindow::contractPickedSegment, this, ID_SEGMENT_CONTRACT);
@@ -376,6 +377,7 @@ MainWindow::init()
 	image_panel_sizer->Add(drawPane, 1, wxSHAPED);
   drawFrame->SetSizer(image_panel_sizer);
   drawFrame->Show();
+  //drawFrame->Hide();
 
 /*
   setPickSegments(false);
@@ -395,6 +397,9 @@ MainWindow::~MainWindow()
                                      // this, and can't find the model to deregister callbacks when destroying the display.
   clearOverlays();
   delete model;
+
+  // Delete drawFame when main window is closed (?)
+  delete drawFrame;
 }
 
 ModelDisplay *
