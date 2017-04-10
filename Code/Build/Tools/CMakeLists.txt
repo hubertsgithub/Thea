@@ -128,11 +128,14 @@ ENDIF()
 # Include directories
 INCLUDE_DIRECTORIES(BEFORE
                     ${SourceRoot}
-                    ${OPENCL_INCLUDE_DIRS}
                     ${OPENGL_INCLUDE_DIRS}
                     ${Boost_INCLUDE_DIRS}
                     ${Lib3ds_INCLUDE_DIRS}
                     ${CGAL_INCLUDE_DIRS})
+
+IF(OPENCL_FOUND)
+  INCLUDE_DIRECTORIES(BEFORE ${OPENCL_INCLUDE_DIRS})
+ENDIF()
 
 # Link directories
 LINK_DIRECTORIES(${OutputRoot}/lib
@@ -249,6 +252,45 @@ IF(APPLE)
 ENDIF()
 
 SET(TheaAllTools ${TheaAllTools} ImageFeatures)
+
+#===========================================================
+# MatTrans
+#===========================================================
+
+IF(wxWidgets_FOUND AND OPENGL_FOUND)
+  # Source file lists
+  FILE(GLOB MatTransSources
+       ${SourceRoot}/Tools/MatTrans/*.cpp)
+
+  # Libraries to link to
+  SET(MatTransLibraries
+      Thea
+      ${wxWidgets_LIBRARIES}
+      ${Lib3ds_LIBRARIES}
+      ${OPENGL_LIBRARIES}
+      ${Boost_LIBRARIES}
+      ${PLATFORM_LIBRARIES})
+
+  # Build products
+  ADD_EXECUTABLE(MatTrans ${MatTransSources})
+
+  # Additional libraries to be linked
+  TARGET_LINK_LIBRARIES(MatTrans ${MatTransLibraries})
+
+  # Linker flags
+  IF(Thea_LDFLAGS)
+    SET_TARGET_PROPERTIES(MatTrans PROPERTIES LINK_FLAGS ${Thea_LDFLAGS})
+  ENDIF()
+
+  # Fix library install names on OS X
+  IF(APPLE)
+    INCLUDE(${CMAKE_MODULE_PATH}/OSXFixDylibReferences.cmake)
+    OSX_FIX_DYLIB_REFERENCES(MatTrans "${MatTransLibraries}")
+  ENDIF()
+
+  SET(TheaAllTools ${TheaAllTools} MatTrans)
+
+ENDIF()
 
 #===========================================================
 # MeshConv
