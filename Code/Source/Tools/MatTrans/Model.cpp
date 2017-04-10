@@ -41,6 +41,7 @@
 
 #include "Model.hpp"
 #include "App.hpp"
+#include "BinaryInputStream.hpp"
 #include "MainWindow.hpp"
 #include "Math.hpp"
 #include "Mesh.hpp"
@@ -532,30 +533,58 @@ Model::loadFeatures(std::string const & path_)
   has_features = true;
   try
   {
-    std::ifstream in(path_.c_str());
-    if (!in)
-      throw Error("Couldn't open file");
-
     TheaArray<Vector3> feat_pts;
-    std::string line;
-    Vector3 p;
-    Real f;
-    while (getNextNonBlankLine(in, line))
+
+    if (endsWith(toLower(path_), ".bin"))
     {
-      std::istringstream line_in(line);
-      if (!(line_in >> p[0] >> p[1] >> p[2] >> f))
-        throw Error(format("Couldn't read position of feature point %ld", (long)feat_pts.size()));
+      BinaryInputStream in(path_, Endianness::LITTLE);
+      long num_points = in.readInt64();
+      long num_features = in.readInt64();
+      if (num_points < 0)
+        throw Error(format("Invalid number of points: %ld", num_points));
 
-      feat_pts.push_back(p);
-      features.push_back(TheaArray<Real>());
+      if (num_features < 0)
+        throw Error(format("Invalid number of features: %ld", num_features));
 
-      while (line_in >> f)
-        features.back().push_back(f);
-
-      if (features.size() > 1 && features.back().size() != features.front().size())
+      feat_pts.resize((array_size_t)num_points);
+      features.resize((array_size_t)num_points);
+      for (array_size_t i = 0; i < feat_pts.size(); ++i)
       {
-        throw Error(format("Feature point %ld expects %ld feature(s), has %ld",
-                           (long)feat_pts.size() - 1, features.front().size(), features.back().size()));
+        feat_pts[i][0] = in.readFloat32();
+        feat_pts[i][1] = in.readFloat32();
+        feat_pts[i][2] = in.readFloat32();
+
+        features[i].resize((array_size_t)num_features);
+        for (array_size_t j = 0; j < features[i].size(); ++j)
+          features[i][j] = in.readFloat32();
+      }
+    }
+    else
+    {
+      std::ifstream in(path_.c_str());
+      if (!in)
+        throw Error("Couldn't open file");
+
+      std::string line;
+      Vector3 p;
+      Real f;
+      while (getNextNonBlankLine(in, line))
+      {
+        std::istringstream line_in(line);
+        if (!(line_in >> p[0] >> p[1] >> p[2] >> f))
+          throw Error(format("Couldn't read position of feature point %ld", (long)feat_pts.size()));
+
+        feat_pts.push_back(p);
+        features.push_back(TheaArray<Real>());
+
+        while (line_in >> f)
+          features.back().push_back(f);
+
+        if (features.size() > 1 && features.back().size() != features.front().size())
+        {
+          throw Error(format("Feature point %ld expects %ld feature(s), has %ld",
+                            (long)feat_pts.size() - 1, features.front().size(), features.back().size()));
+        }
       }
     }
 
