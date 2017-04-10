@@ -179,6 +179,9 @@ class Model : public GraphicsWidget, public Transformable<AffineTransform3>, pub
     /** Invalidate the last picked point. */
     void invalidatePick();
 
+    /** Process the picked point. */
+    void processPick();
+
     //========================================================================================================================
     // Interaction
     //========================================================================================================================

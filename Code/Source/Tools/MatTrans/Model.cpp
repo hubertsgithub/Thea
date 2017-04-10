@@ -439,13 +439,11 @@ Model::pick(Ray3 const & ray)
   if (t > 0)
   {
     Vector3 p = ray.getPoint(t);
-    long picked_feat_pt_index = feat_pts_kdtree->closestElement<MetricL2>(p);
+    picked_feat_pt_index = feat_pts_kdtree->closestElement<MetricL2>(p);
     if (picked_feat_pt_index >= 0)
     {
       picked_feat_pt_position = feat_pts_kdtree->getElements()[picked_feat_pt_index];
       valid_pick = true;
-
-      THEA_CONSOLE << "Picked feature point " << picked_feat_pt_index << " at " << picked_feat_pt_position;
     }
 
     wxPostEvent(this, wxCommandEvent(EVT_MODEL_NEEDS_REDRAW));
@@ -462,8 +460,24 @@ Model::invalidatePick()
 }
 
 void
+Model::processPick()
+{
+  if (!valid_pick)
+    return;
+
+  THEA_CONSOLE << "Picked feature point " << picked_feat_pt_index << " at " << picked_feat_pt_position;
+
+  // Model path: path
+  // Position of picked point: picked_feat_pt_position
+  // Features of picked point: features[(array_size_t)picked_feat_pt_index]
+
+  // TODO: Do something useful with above info.
+}
+
+void
 Model::mousePressEvent(wxMouseEvent & event)
 {
+  processPick();
   event.StopPropagation();
 }
 
