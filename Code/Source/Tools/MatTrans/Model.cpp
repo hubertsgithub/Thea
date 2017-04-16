@@ -472,7 +472,17 @@ Model::processPick()
   // Features of picked point: features[(array_size_t)picked_feat_pt_index]
   THEA_CONSOLE << "Picked feature point " << picked_feat_pt_index << " at " << picked_feat_pt_position;
 
-  // TODO: Do something useful with above info.
+  std::vector<PA::Camera> cameras = python_api->getCameras();
+  std::vector<PA::ClickedPoint2D> clicked_points;
+  for (std::vector<PA::Camera>::const_iterator it = cameras.begin(); it != cameras.end(); ++it) {
+    // TODO: Load camera parameters from file and compute 2D coordinate of picked point from that camera
+    // it->camera_path
+    Vector2 pt_2D;
+    clicked_points.push_back(PA::ClickedPoint2D(it->camera_id, pt_2D));
+  }
+
+  std::vector<std::string> image_paths = python_api->retrieveImages(clicked_points);
+  THEA_CONSOLE << image_paths[0];
 }
 
 void
@@ -617,12 +627,10 @@ Model::loadRetrievedImages(std::string const & image_dir_path_, std::string cons
   image_dir_path = image_dir_path_;
 
   THEA_CONSOLE << "Initializing PythonApi...";
-  python_api = getPythonApi();
+  python_api = PA::getPythonApi();
   THEA_CONSOLE << "Initialized PythonApi";
 
   python_api->loadResources(image_dir_path, retrieved_images_path);
-  std::vector<std::string> image_paths = python_api->retrieveImages(Vector3(0, 1, 2));
-  THEA_CONSOLE << image_paths[0];
 
   has_retrieved_images = true;
   return has_retrieved_images;

@@ -62,12 +62,52 @@ namespace bp = boost::python;
 
 namespace MatTrans {
 
-template< typename T >
-inline
-std::vector< T > toStdVector( bp::object const & iterable )
+namespace PA {
+//==================
+// Data structures
+//==================
+
+struct Camera
 {
-    return std::vector< T >( bp::stl_input_iterator< T >( iterable ),
-                             bp::stl_input_iterator< T >( ) );
+  int camera_id;
+  std::string camera_path;
+
+  Camera(int camera_id, std::string const & camera_path)
+    : camera_id(camera_id), camera_path(camera_path) {}
+
+  Camera(bp::object dic)
+    : camera_id(bp::extract<int>(dic["camera_id"])), camera_path(bp::extract<std::string>(dic["camera_path"])) {}
+};
+
+struct ClickedPoint2D
+{
+  int camera_id;
+  Vector2 pt_2D;
+
+  ClickedPoint2D(int camera_id, Vector2 const & pt_2D)
+    : camera_id(camera_id), pt_2D(pt_2D) {}
+
+  /**
+   * Create a python dictionary to represent this object.
+   */
+  bp::dict to_pyobj() const
+  {
+    bp::dict ret;
+    ret["camera_id"] = camera_id;
+    bp::dict pt_2D_dic;
+    pt_2D_dic["x"] = pt_2D.x();
+    pt_2D_dic["y"] = pt_2D.y();
+    ret["pt_2D"] = pt_2D_dic;
+    return ret;
+  }
+};
+
+template<typename T>
+inline
+std::vector<T> toStdVector(bp::object const & iterable)
+{
+    return std::vector<T>(bp::stl_input_iterator<T>(iterable),
+                             bp::stl_input_iterator<T>());
 }
 
 // From: http://stackoverflow.com/questions/1418015/how-to-get-python-exception-text
@@ -78,30 +118,75 @@ class PythonApi
 {
   private:
     bp::object self_;
+    bool verbose_;
 
   public:
-    //PythonApi(PyObject* self): self_(bp::handle<>(bp::borrowed(self))) { }
-    PythonApi(bp::object self): self_(self) {
-      THEA_CONSOLE << "PythonApi: Creating PythonApi C++ object...";
+    PythonApi(bp::object self, bool verbose=true): self_(self), verbose_(verbose) {
+      if (verbose_)
+        THEA_CONSOLE << "PythonApi: Creating PythonApi C++ object...";
     }
 
+    /**
+     * Loads the resources associated to the current shape.
+     */
     void loadResources(std::string const & image_dir_path, std::string const & retrieved_images_path)
     {
       try {
-        THEA_CONSOLE << "PythonApi: Loading resources...";
+        if (verbose_)
+          THEA_CONSOLE << "PythonApi: Loading resources...";
         self_.attr("load_resources")(image_dir_path, retrieved_images_path);
-        THEA_CONSOLE << "PythonApi: Loaded resources.";
+        if (verbose_)
+          THEA_CONSOLE << "PythonApi: Loaded resources.";
       }
       PYTHON_API_CATCH()
     }
 
-    std::vector<std::string> retrieveImages(Vector3 const & picked_point)
+    /**
+     * Returns cameras which were used to render the current shape. We need
+     * these to generate 2D points from the clicked 3D point on the shape and
+     * each camera pose.
+     */
+    std::vector<Camera> getCameras()
     {
       try {
-        THEA_CONSOLE << "PythonApi: Retrieving images...";
-        bp::object image_list = self_.attr("retrieve_images")(picked_point.x(), picked_point.y(), picked_point.z());
+        if (verbose_)
+          THEA_CONSOLE << "PythonApi: calling getCameras...";
+        // Convert python list to C++ list
+        std::vector<bp::object> camera_list = toStdVector<bp::object>(self_.attr("get_cameras")());
+        // Convert each python dictionary in list to Camera objects
+        std::vector<Camera> ret;
+        for (std::vector<bp::object>::const_iterator it = camera_list.begin(); it != camera_list.end(); ++it) {
+          Camera c(*it);
+          if (verbose_)
+            THEA_CONSOLE << "Camera: camera_id (" << c.camera_id << "), camera_path: (" << c.camera_path << ")";
+          ret.push_back(c);
+        }
+        if (verbose_)
+          THEA_CONSOLE << "PythonApi: getCameras finished.";
+        return ret;
+      }
+      PYTHON_API_CATCH()
+    }
+
+    /**
+     * Retrieves images which have the most relevant materials based on the
+     * clicked 2D points for each rendered view of the current shape.
+     */
+    std::vector<std::string> retrieveImages(std::vector<ClickedPoint2D> const & clicked_points)
+    {
+      try {
+        if (verbose_)
+          THEA_CONSOLE << "PythonApi: Retrieving images...";
+        // Convert C++ list into python list (also convert objects inside)
+        bp::list clicked_points_py;
+        for (std::vector<ClickedPoint2D>::const_iterator it = clicked_points.begin(); it != clicked_points.end(); ++it) {
+          clicked_points_py.append(it->to_pyobj());
+        }
+
+        bp::object image_list = self_.attr("retrieve_images")(clicked_points_py);
         std::vector<std::string> ret = toStdVector<std::string>(image_list);
-        THEA_CONSOLE << "PythonApi: Retrieved images.";
+        if (verbose_)
+          THEA_CONSOLE << "PythonApi: Retrieved images.";
         return ret;
       }
       PYTHON_API_CATCH()
@@ -109,6 +194,8 @@ class PythonApi
 }; // class Model
 
 shared_ptr<PythonApi> getPythonApi();
+
+} // namespace PA
 
 } // namespace MatTrans
 

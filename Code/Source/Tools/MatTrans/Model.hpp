@@ -308,7 +308,7 @@ class Model : public GraphicsWidget, public Transformable<AffineTransform3>, pub
     PointKDTree * feat_pts_kdtree;
     TheaArray< TheaArray<Real> > features;
 
-    shared_ptr<PythonApi> python_api;
+    shared_ptr<PA::PythonApi> python_api;
     std::string retrieved_images_path;
     std::string image_dir_path;
     bool has_retrieved_images;

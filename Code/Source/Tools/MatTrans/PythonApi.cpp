@@ -43,6 +43,8 @@
 
 namespace MatTrans {
 
+namespace PA {
+
 // From: http://stackoverflow.com/questions/1418015/how-to-get-python-exception-text
 std::string handle_pyerror()
 {
@@ -79,5 +81,7 @@ shared_ptr<PythonApi> getPythonApi()
     throw;
   }
 }
+
+} // namespace PA
 
 } // namespace MatTrans
