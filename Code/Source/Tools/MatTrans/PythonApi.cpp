@@ -82,6 +82,65 @@ shared_ptr<PythonApi> getPythonApi()
   }
 }
 
+
+//==================
+// PythonApi
+//==================
+
+void PythonApi::loadResources(std::string const & image_dir_path, std::string const & retrieved_images_path)
+{
+  try {
+    if (verbose_)
+      THEA_CONSOLE << "PythonApi: Loading resources...";
+    self_.attr("load_resources")(image_dir_path, retrieved_images_path);
+    if (verbose_)
+      THEA_CONSOLE << "PythonApi: Loaded resources.";
+  }
+  PYTHON_API_CATCH()
+}
+
+std::vector<Camera> PythonApi::getCameras()
+{
+  try {
+    if (verbose_)
+      THEA_CONSOLE << "PythonApi: calling getCameras...";
+    // Convert python list to C++ list
+    std::vector<bp::object> camera_list = toStdVector<bp::object>(self_.attr("get_cameras")());
+    // Convert each python dictionary in list to Camera objects
+    std::vector<Camera> ret;
+    for (std::vector<bp::object>::const_iterator it = camera_list.begin(); it != camera_list.end(); ++it) {
+      Camera c(*it);
+      if (verbose_)
+        THEA_CONSOLE << "Camera: camera_id (" << c.camera_id << "), camera_path: (" << c.camera_path << ")";
+      ret.push_back(c);
+    }
+    if (verbose_)
+      THEA_CONSOLE << "PythonApi: getCameras finished.";
+    return ret;
+  }
+  PYTHON_API_CATCH()
+}
+
+std::vector<std::string> PythonApi::retrieveImages(std::vector<ClickedPoint2D> const & clicked_points)
+{
+  try {
+    if (verbose_)
+      THEA_CONSOLE << "PythonApi: Retrieving images...";
+    // Convert C++ list into python list (also convert objects inside)
+    bp::list clicked_points_py;
+    for (std::vector<ClickedPoint2D>::const_iterator it = clicked_points.begin(); it != clicked_points.end(); ++it) {
+      clicked_points_py.append(it->to_pyobj());
+    }
+
+    bp::object image_list = self_.attr("retrieve_images")(clicked_points_py);
+    std::vector<std::string> ret = toStdVector<std::string>(image_list);
+    if (verbose_)
+      THEA_CONSOLE << "PythonApi: Retrieved images.";
+    return ret;
+  }
+  PYTHON_API_CATCH()
+}
+
 } // namespace PA
 
 } // namespace MatTrans
