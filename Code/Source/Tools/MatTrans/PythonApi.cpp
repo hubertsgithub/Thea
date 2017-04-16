@@ -87,12 +87,13 @@ shared_ptr<PythonApi> getPythonApi()
 // PythonApi
 //==================
 
-void PythonApi::loadResources(std::string const & image_dir_path, std::string const & retrieved_images_path)
+void PythonApi::loadResources(std::string const & dataset_dir,
+  std::string const & experiment_dir, std::string const & shape_data_path)
 {
   try {
     if (verbose_)
       THEA_CONSOLE << "PythonApi: Loading resources...";
-    self_.attr("load_resources")(image_dir_path, retrieved_images_path);
+    self_.attr("load_resources")(dataset_dir, experiment_dir, shape_data_path);
     if (verbose_)
       THEA_CONSOLE << "PythonApi: Loaded resources.";
   }

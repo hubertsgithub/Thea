@@ -129,7 +129,8 @@ class PythonApi
     /**
      * Loads the resources associated to the current shape.
      */
-    void loadResources(std::string const & image_dir_path, std::string const & retrieved_images_path);
+    void loadResources(std::string const & dataset_dir,
+      std::string const & experiment_dir, std::string const & shape_data_path);
 
     /**
      * Returns cameras which were used to render the current shape. We need

@@ -1,15 +1,20 @@
 
 import numpy as np
 import h5py
+import app_models
 
 
 class PythonApi:
     def __init__(self):
-        self.image_dir_path = None
-        self.retrieved_img_idxs = None
+        self.dataset_dir = None
+        self.experiment_dir = None
+        self.shape_data_path = None
+        self.shape = None
 
-    def load_resources(self, image_dir_path, retrieved_images_path):
-        self.image_dir_path = image_dir_path
+    def load_resources(self, dataset_dir, experiment_dir, shape_data_path):
+        self.dataset_dir = dataset_dir
+        self.experiment_dir = experiment_dir
+        self.shape_data_path = shape_data_path
 
         #with h5py.File(args.experimentDir + args.retrieval,'r') as hf:
             #result = np.array(hf.get('result'))
@@ -17,8 +22,6 @@ class PythonApi:
             #if result.shape[0] != 0:
                 #raise ValueError('Retrieval results should contain only')
             #self.retrieved_img_idxs = None
-        print 'image_dir_path:', image_dir_path
-        print 'retrieved_images_path:', retrieved_images_path
 
     def get_cameras(self):
         return [{'camera_id': 0, 'camera_path': 'testpath/test'}]

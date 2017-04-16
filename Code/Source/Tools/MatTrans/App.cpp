@@ -87,8 +87,9 @@ App::optsToString() const
       << "\n  model = " << opts.model
       << "\n  overlays = { " << stringJoin(opts.overlays, ", ") << " }"
       << "\n  features = " << opts.features
-      << "\n  retrieved-images = " << opts.retrieved_images
-      << "\n  image-dir = " << opts.image_dir
+      << "\n  dataset-dir = " << opts.dataset_dir
+      << "\n  experiment-dir = " << opts.experiment_dir
+      << "\n  shape-data = " << opts.shape_data
       << "\n  elem-labels = " << opts.elem_labels
       << "\n  emph-features = " << opts.accentuate_features
       << "\n  color-cube = " << opts.color_cube_features
@@ -226,8 +227,9 @@ App::parseOptions(std::vector<std::string> const & args)
           ("model",                po::value<std::string>(&s_model), "Model to load on startup, with optional transform")
           ("overlay",              po::value< std::vector<std::string> >(&s_overlays), "Overlay model(s) to load on startup")
           ("features,f",           po::value<std::string>(&opts.features), "Directory/file containing features to load")
-          ("retrieved-images,r",   po::value<std::string>(&opts.retrieved_images), "File containing retrieved image indices for this shape")
-          ("image-dir",            po::value<std::string>(&opts.image_dir), "Directory containing images we use for retrieval and their corresponding features")
+          ("dataset-dir",          po::value<std::string>(&opts.dataset_dir), "Directory containing shapes and images")
+          ("experiment-dir",       po::value<std::string>(&opts.experiment_dir), "Directory containing generated data for the Mattrans experiments (retrievals, etc.)")
+          ("shape-data",           po::value<std::string>(&opts.shape_data), "File containing Mattrans information of the loaded shape")
           ("elem-labels,l",        po::value<std::string>(&opts.elem_labels), "Directory/file containing face/point labels to load")
           ("emph-features,e",      "Make feature distributions easier to view")
           ("color-cube,3",         "Map 0-centered 3D feature sets to RGB color-cube, if --emph-features")
@@ -320,8 +322,9 @@ App::parseOptions(std::vector<std::string> const & args)
 
   try {
     opts.features             =  FileSystem::resolve(opts.features);
-    opts.retrieved_images     =  FileSystem::resolve(opts.retrieved_images);
-    opts.image_dir            =  FileSystem::resolve(opts.image_dir);
+    opts.dataset_dir          =  FileSystem::resolve(opts.dataset_dir);
+    opts.experiment_dir       =  FileSystem::resolve(opts.experiment_dir);
+    opts.shape_data           =  FileSystem::resolve(opts.shape_data);
     opts.elem_labels          =  FileSystem::resolve(opts.elem_labels);
     opts.accentuate_features  =  (vm.count("emph-features") > 0);
     opts.color_cube_features  =  (vm.count("color-cube") > 0);

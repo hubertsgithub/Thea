@@ -222,7 +222,7 @@ Model::load(std::string path_)
     path = path_;
 
     loadFeatures(getDefaultFeaturesPath());
-    loadRetrievedImages(app().options().image_dir, app().options().retrieved_images);
+    loadShapeData(app().options().dataset_dir, app().options().experiment_dir, app().options().shape_data);
   }
 
   loadElementLabels(getDefaultElementLabelsPath());
@@ -621,19 +621,16 @@ Model::loadFeatures(std::string const & path_)
 }
 
 bool
-Model::loadRetrievedImages(std::string const & image_dir_path_, std::string const & retrieved_images_path_)
+Model::loadShapeData(std::string const & dataset_dir_,
+    std::string const & experiment_dir_, std::string const & shape_data_path_)
 {
-  retrieved_images_path = retrieved_images_path_;
-  image_dir_path = image_dir_path_;
-
   THEA_CONSOLE << "Initializing PythonApi...";
   python_api = PA::getPythonApi();
   THEA_CONSOLE << "Initialized PythonApi";
 
-  python_api->loadResources(image_dir_path, retrieved_images_path);
+  python_api->loadResources(dataset_dir_, experiment_dir_, shape_data_path_);
 
-  has_retrieved_images = true;
-  return has_retrieved_images;
+  return true;
 }
 
 namespace ModelInternal {
