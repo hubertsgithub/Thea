@@ -14,8 +14,8 @@ class AppShape:
             shape_id=self.shape_id,
             model_path=self.model_path,
             shape_view_dic={
-                shape_view_id: sv.get_dict()
-                for shape_view_id, sv in self.shape_view_dic.iteritems()
+                camera_id: sv.get_dict()
+                for camera_id, sv in self.shape_view_dic.iteritems()
             },
         )
 
@@ -36,12 +36,9 @@ class AppShape:
 
 
 class ShapeView:
-    def __init__(self, shape_view_id, camera_id, camera_path,
+    def __init__(self, camera_id, camera_path,
                  rendered_view_path, bb_path, photo_retrievals):
-        # Index of the shape view for a certain shape
-        self.shape_view_id = shape_view_id
         # ID of the camera settings which were used to render this shape view.
-        # Currently this is usually the same as `shape_view_id`
         self.camera_id = camera_id
         # Relative path to the file which contains the pose of the camera
         # (relative to the experiment root directory)
@@ -58,7 +55,6 @@ class ShapeView:
 
     def get_dict(self):
         return dict(
-            shape_view_id=self.shape_view_id,
             camera_id=self.camera_id,
             camera_path=self.camera_path,
             rendered_view_path=self.rendered_view_path,
@@ -77,7 +73,6 @@ class ShapeView:
         ]
 
         return ShapeView(
-            shape_view_id=json_data['shape_view_id'],
             camera_id=json_data['camera_id'],
             camera_path=json_data['camera_path'],
             rendered_view_path=json_data['rendered_view_path'],
