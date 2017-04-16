@@ -52,6 +52,12 @@ SET(Thea_FIND_Lib3ds     TRUE)
 SET(Thea_FIND_FreeImage  TRUE)
 INCLUDE(${ProjectRoot}/Build/Common/FindTheaDependencies.cmake)
 
+# Dependency: Python
+FIND_PACKAGE(PythonLibs)
+IF(NOT PYTHONLIBS_FOUND)
+  MESSAGE(FATAL_ERROR "Unable to find python!")
+ENDIF()
+
 # Dependency: Boost
 SET(Boost_USE_STATIC_LIBS      ON)
 SET(Boost_USE_MULTITHREADED    ON)
@@ -62,7 +68,7 @@ IF(EXISTS ${THEA_INSTALLATIONS_ROOT}/installed-boost)
 ELSE()
   SET(BOOST_ROOT ${THEA_INSTALLATIONS_ROOT})
 ENDIF()
-FIND_PACKAGE(Boost COMPONENTS program_options thread REQUIRED)
+FIND_PACKAGE(Boost COMPONENTS program_options thread python REQUIRED)
 
 # Dependency: OpenGL
 IF(THEA_GL_OSMESA)
@@ -129,6 +135,7 @@ ENDIF()
 INCLUDE_DIRECTORIES(BEFORE
                     ${SourceRoot}
                     ${OPENGL_INCLUDE_DIRS}
+                    ${PYTHON_INCLUDE_DIRS}
                     ${Boost_INCLUDE_DIRS}
                     ${Lib3ds_INCLUDE_DIRS}
                     ${CGAL_INCLUDE_DIRS})
@@ -268,6 +275,7 @@ IF(wxWidgets_FOUND AND OPENGL_FOUND)
       ${wxWidgets_LIBRARIES}
       ${Lib3ds_LIBRARIES}
       ${OPENGL_LIBRARIES}
+      ${PYTHON_LIBRARIES}
       ${Boost_LIBRARIES}
       ${PLATFORM_LIBRARIES})
 

@@ -87,6 +87,8 @@ App::optsToString() const
       << "\n  model = " << opts.model
       << "\n  overlays = { " << stringJoin(opts.overlays, ", ") << " }"
       << "\n  features = " << opts.features
+      << "\n  retrieved-images = " << opts.retrieved_images
+      << "\n  image-dir = " << opts.image_dir
       << "\n  elem-labels = " << opts.elem_labels
       << "\n  emph-features = " << opts.accentuate_features
       << "\n  color-cube = " << opts.color_cube_features
@@ -224,6 +226,8 @@ App::parseOptions(std::vector<std::string> const & args)
           ("model",                po::value<std::string>(&s_model), "Model to load on startup, with optional transform")
           ("overlay",              po::value< std::vector<std::string> >(&s_overlays), "Overlay model(s) to load on startup")
           ("features,f",           po::value<std::string>(&opts.features), "Directory/file containing features to load")
+          ("retrieved-images,r",   po::value<std::string>(&opts.retrieved_images), "File containing retrieved image indices for this shape")
+          ("image-dir",            po::value<std::string>(&opts.image_dir), "Directory containing images we use for retrieval and their corresponding features")
           ("elem-labels,l",        po::value<std::string>(&opts.elem_labels), "Directory/file containing face/point labels to load")
           ("emph-features,e",      "Make feature distributions easier to view")
           ("color-cube,3",         "Map 0-centered 3D feature sets to RGB color-cube, if --emph-features")
@@ -314,17 +318,22 @@ App::parseOptions(std::vector<std::string> const & args)
     opts.overlay_transforms.push_back(transform);
   }
 
-  opts.features             =  FileSystem::resolve(opts.features);
-  opts.elem_labels          =  FileSystem::resolve(opts.elem_labels);
-  opts.accentuate_features  =  (vm.count("emph-features") > 0);
-  opts.color_cube_features  =  (vm.count("color-cube") > 0);
-  opts.show_normals         =  (vm.count("normals") > 0);
-  opts.show_graph           =  (vm.count("graph") > 0);
-  opts.flat                 =  (vm.count("flat") > 0);
-  opts.fancy_points         =  (vm.count("fancy-points") > 0);
-  opts.fancy_colors         =  (vm.count("fancy-colors") > 0);
-  opts.no_axes              =  (vm.count("no-axes") > 0);
-  opts.no_shading           =  (vm.count("no-shading") > 0);
+  try {
+    opts.features             =  FileSystem::resolve(opts.features);
+    opts.retrieved_images     =  FileSystem::resolve(opts.retrieved_images);
+    opts.image_dir            =  FileSystem::resolve(opts.image_dir);
+    opts.elem_labels          =  FileSystem::resolve(opts.elem_labels);
+    opts.accentuate_features  =  (vm.count("emph-features") > 0);
+    opts.color_cube_features  =  (vm.count("color-cube") > 0);
+    opts.show_normals         =  (vm.count("normals") > 0);
+    opts.show_graph           =  (vm.count("graph") > 0);
+    opts.flat                 =  (vm.count("flat") > 0);
+    opts.fancy_points         =  (vm.count("fancy-points") > 0);
+    opts.fancy_colors         =  (vm.count("fancy-colors") > 0);
+    opts.no_axes              =  (vm.count("no-axes") > 0);
+    opts.no_shading           =  (vm.count("no-shading") > 0);
+  }
+  THEA_STANDARD_CATCH_BLOCKS(return false;, WARNING, "Failed to resolve paths.", "")
 
   if (!s_bg_color.empty())
   {

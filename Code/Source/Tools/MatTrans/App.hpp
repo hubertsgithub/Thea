@@ -83,6 +83,8 @@ class App : public wxApp
       TheaArray<std::string> overlays;                     ///< The initial overlays to load.
       TheaArray<AffineTransform3> overlay_transforms;      ///< The transforms of the overlays.
       std::string features;                                ///< Path to directory/file containing features to load.
+      std::string retrieved_images;                        ///< Path to file containing retrieved image indices for this shape.
+      std::string image_dir;                               ///< Path to directory containing images we use for retrieval and their corresponding features.
       std::string elem_labels;                             ///< Path to directory/file containing face/point labels to load.
 
       bool accentuate_features;                             ///< Make feature distributions easier to view?

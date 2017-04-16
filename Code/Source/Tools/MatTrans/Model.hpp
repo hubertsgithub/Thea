@@ -45,6 +45,7 @@
 #include "Common.hpp"
 #include "GraphicsWidget.hpp"
 #include "MeshFwd.hpp"
+#include "PythonApi.hpp"
 #include "../../Algorithms/KDTreeN.hpp"
 #include "../../Algorithms/MeshKDTree.hpp"
 #include "../../Algorithms/PointTraitsN.hpp"
@@ -209,6 +210,19 @@ class Model : public GraphicsWidget, public Transformable<AffineTransform3>, pub
     bool hasFeatures() const { return has_features; }
 
     //========================================================================================================================
+    // Image retrievals
+    //========================================================================================================================
+
+    /** Load image retrievals and corresponding 2D features from file. */
+    bool loadRetrievedImages(std::string const & image_dir_path_, std::string const & retrieved_images_path_);
+
+    /** Get the path of the currently loaded retrieved image indices. */
+    std::string const & getRetrievedImagesPath() const { return retrieved_images_path; }
+
+    /** Check if the model has currently loaded features. */
+    bool hasRetrievedImages() const { return has_retrieved_images; }
+
+    //========================================================================================================================
     // Face labels
     //========================================================================================================================
 
@@ -293,6 +307,15 @@ class Model : public GraphicsWidget, public Transformable<AffineTransform3>, pub
     bool has_features;
     PointKDTree * feat_pts_kdtree;
     TheaArray< TheaArray<Real> > features;
+
+    shared_ptr<PythonApi> python_api;
+    std::string retrieved_images_path;
+    std::string image_dir_path;
+    bool has_retrieved_images;
+    /** Paths to retrieved image files. */
+    TheaArray< std::string > retrieved_image_paths;
+    /** Loaded 2D features predicted by our Joint 2D-3D net. */
+    TheaArray< TheaArray<Real> > retrieved_images_2D_features;
 
     std::string elem_labels_path;
     bool has_elem_labels;

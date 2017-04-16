@@ -222,6 +222,7 @@ Model::load(std::string path_)
     path = path_;
 
     loadFeatures(getDefaultFeaturesPath());
+    loadRetrievedImages(app().options().image_dir, app().options().retrieved_images);
   }
 
   loadElementLabels(getDefaultElementLabelsPath());
@@ -466,11 +467,10 @@ Model::processPick()
   if (!valid_pick)
     return;
 
-  THEA_CONSOLE << "Picked feature point " << picked_feat_pt_index << " at " << picked_feat_pt_position;
-
   // Model path: path
   // Position of picked point: picked_feat_pt_position
   // Features of picked point: features[(array_size_t)picked_feat_pt_index]
+  THEA_CONSOLE << "Picked feature point " << picked_feat_pt_index << " at " << picked_feat_pt_position;
 
   // TODO: Do something useful with above info.
 }
@@ -608,6 +608,24 @@ Model::loadFeatures(std::string const & path_)
   wxPostEvent(this, wxCommandEvent(EVT_MODEL_NEEDS_REDRAW));
 
   return has_features;
+}
+
+bool
+Model::loadRetrievedImages(std::string const & image_dir_path_, std::string const & retrieved_images_path_)
+{
+  retrieved_images_path = retrieved_images_path_;
+  image_dir_path = image_dir_path_;
+
+  THEA_CONSOLE << "Initializing PythonApi...";
+  python_api = getPythonApi();
+  THEA_CONSOLE << "Initialized PythonApi";
+
+  python_api->loadResources(image_dir_path, retrieved_images_path);
+  std::vector<std::string> image_paths = python_api->retrieveImages(Vector3(0, 1, 2));
+  THEA_CONSOLE << image_paths[0];
+
+  has_retrieved_images = true;
+  return has_retrieved_images;
 }
 
 namespace ModelInternal {
