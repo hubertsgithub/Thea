@@ -14,7 +14,7 @@ using namespace Thea;
 class wxImageDialog : public wxDialog
 {
   wxImage image;
-  wxBitmap resized;
+  wxBitmap bitmap;
   wxBitmapType image_format;
   int w, h;
   TheaArray<std::string> image_paths;
@@ -23,9 +23,9 @@ class wxImageDialog : public wxDialog
 public:
   wxImageDialog(wxFrame* parent, TheaArray<std::string> const & image_paths_, wxBitmapType image_format_);
 
+  void loadCurrentImage();
   void paintEvent(wxPaintEvent & evt);
   void paintNow();
-  void OnSize(wxSizeEvent& event);
   void render(wxDC& dc);
 
   // some useful events

@@ -21,13 +21,13 @@ BEGIN_EVENT_TABLE(wxImageDialog, wxDialog)
    EVT_KEY_DOWN(wxImageDialog::keyPressed)
    EVT_KEY_UP(wxImageDialog::keyReleased)
    EVT_MOUSEWHEEL(wxImageDialog::mouseWheelMoved)
+   EVT_SIZE(wxImageDialog::OnSize)
    */
 
   EVT_KEY_DOWN(wxImageDialog::keyPressed)
   // catch paint events
   EVT_PAINT(wxImageDialog::paintEvent)
   //Size event
-  EVT_SIZE(wxImageDialog::OnSize)
 END_EVENT_TABLE()
 
 
@@ -52,12 +52,8 @@ wxImageDialog::wxImageDialog(wxFrame* parent, TheaArray<std::string> const & ima
   if (image_paths.size() == 0)
     throw Error(format("Invalid number of images: %ld", image_paths.size()));
 
-  // load the file... ideally add a check to see if loading was successful
-  image.LoadFile(image_paths[0].c_str(), image_format);
-  w = -1;
-  h = -1;
   image_num = 0;
-
+  loadCurrentImage();
   THEA_CONSOLE << "wxImageDialog constructor finished.";
 }
 
@@ -69,10 +65,6 @@ void wxImageDialog::keyPressed(wxKeyEvent& event)
     image_num++;
     if (image_num == int(image_paths.size()))
       image_num = 0;
-    const char* image_path = image_paths[image_num].c_str();
-    image.LoadFile(image_path, image_format);
-    w = -1;
-    h = -1;
     paintNow();
   }
 
@@ -80,6 +72,15 @@ void wxImageDialog::keyPressed(wxKeyEvent& event)
   // Maybe important to not allow window to be closed (?)
 }
 
+void wxImageDialog::loadCurrentImage()
+{
+  // Load the file... ideally add a check to see if loading was successful
+  image.LoadFile(image_paths[image_num].c_str(), image_format);
+  // Convert to bitmap for rendering
+  bitmap = wxBitmap(image);
+  // Resize dialog to fit the loaded image
+  SetSize(wxDefaultCoord, wxDefaultCoord, image.GetWidth(), image.GetHeight());
+}
 
 /*
  * Called by the system of by wxWidgets when the panel needs
@@ -116,62 +117,11 @@ void wxImageDialog::paintNow()
  */
 void wxImageDialog::render(wxDC&  dc)
 {
-  int neww, newh;
-  dc.GetSize(&neww, &newh);
+  //int neww, newh;
+  //dc.GetSize(&neww, &newh);
 
-  if(neww != w || newh != h) {
-    resized = wxBitmap(image.Scale(neww, newh /*, wxIMAGE_QUALITY_HIGH*/));
-    w = neww;
-    h = newh;
-    dc.DrawBitmap(resized, 0, 0, false);
-  } else {
-    dc.DrawBitmap(resized, 0, 0, false);
-  }
+  dc.DrawBitmap(bitmap, 0, 0, false);
 }
-
-/*
- * Here we call refresh to tell the panel to draw itself again.
- * So when the user resizes the image panel the image should be resized too.
- */
-void wxImageDialog::OnSize(wxSizeEvent& event)
-{
-  Refresh();
-  //skip the event.
-  event.Skip();
-}
-
-/*
-// ----------------------------------------
-// how-to-use example
-
-class MyApp: public wxApp
-{
-
-    wxFrame *frame;
-    wxImagePanel * drawPane;
-public:
-    bool OnInit()
-    {
-        // make sure to call this first
-        wxInitAllImageHandlers();
-
-        wxBoxSizer* sizer = new wxBoxSizer(wxHORIZONTAL);
-        frame = new wxFrame(NULL, wxID_ANY, wxT("Hello wxDC"), wxPoint(50,50), wxSize(800,600));
-
-        // then simply create like this
-        drawPane = new wxImageDialog( frame, wxT("image.jpg"), wxBITMAP_TYPE_JPEG);
-        sizer->Add(drawPane, 1, wxEXPAND);
-
-        frame->SetSizer(sizer);
-
-        frame->Show();
-        return true;
-    }
-
-};
-
-IMPLEMENT_APP(MyApp)
-*/
 
 } // namespace MatTrans
 
