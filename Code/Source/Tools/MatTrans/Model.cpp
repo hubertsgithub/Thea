@@ -481,7 +481,8 @@ Model::processPick()
     clicked_points.push_back(PA::ClickedPoint2D(it->camera_id, pt_2D));
   }
 
-  std::vector<std::string> image_paths = python_api->retrieveImages(clicked_points);
+  std::vector<std::string> image_paths = python_api->retrieveImages(
+      clicked_points, features[(array_size_t)picked_feat_pt_index]);
   THEA_CONSOLE << image_paths[0];
 }
 
@@ -581,7 +582,7 @@ Model::loadFeatures(std::string const & path_)
       while (getNextNonBlankLine(in, line))
       {
         std::istringstream line_in(line);
-        if (!(line_in >> p[0] >> p[1] >> p[2] >> f))
+        if (!(line_in >> p[0] >> p[1] >> p[2]))
           throw Error(format("Couldn't read position of feature point %ld", (long)feat_pts.size()));
 
         feat_pts.push_back(p);
@@ -629,6 +630,13 @@ Model::loadShapeData(std::string const & dataset_dir_,
   THEA_CONSOLE << "Initialized PythonApi";
 
   python_api->loadResources(dataset_dir_, experiment_dir_, shape_data_path_);
+
+  std::vector<PA::ClickedPoint2D> clicked_points;
+  Vector2 pt_2D;
+  clicked_points.push_back(PA::ClickedPoint2D(1, pt_2D));
+  std::vector<std::string> image_paths = python_api->retrieveImages(
+      clicked_points, features[0]);
+  THEA_CONSOLE << image_paths[0];
 
   return true;
 }

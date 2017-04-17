@@ -49,7 +49,8 @@ class PythonApi:
 
         return camera_dic.values()
 
-    def retrieve_images(self, clicked_points):
+    def retrieve_images(self, clicked_points, feat_3D):
+        print feat_3D
         for clicked_point in clicked_points:
             cid = clicked_point['camera_id']
             if cid not in self.shape.shape_view_dic:
@@ -59,15 +60,17 @@ class PythonApi:
             # Get all retrieved photos corresponding to this shape view
             sv = self.shape.shape_view_dic[cid]
             for pr in sv.photo_retrievals:
-                # TODO: Figure out what coordinate system is the 2D point in,
+                # TODO: Figure out what coordinate system the 2D point is in,
                 # now we assume both coordinates are between [0, 1]
+                x = clicked_point['pt_2D']['x']
+                y = clicked_point['pt_2D']['y']
 
                 # Get 2D feature for the whole photo
                 feat_2D = self.features_2D[self.photo_id_to_idx[pr.photo_id]]
 
                 # Interpolate feature map
-                col_idx = clicked_point['pt_2D']['x'] * feat_2D.shape[1]
-                row_idx = clicked_point['pt_2D']['y'] * feat_2D.shape[0]
+                col_idx = x * feat_2D.shape[1]
+                row_idx = y * feat_2D.shape[0]
                 #point_feat_2D = map_coordinates(feat_2D, coordinates=[[row_idx, col_idx]], order=1)
                 #print point_feat_2D
 

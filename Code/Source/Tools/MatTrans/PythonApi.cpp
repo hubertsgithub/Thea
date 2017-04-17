@@ -40,6 +40,7 @@
 //============================================================================
 
 #include "PythonApi.hpp"
+#include <numpy/ndarrayobject.h>
 
 namespace MatTrans {
 
@@ -67,6 +68,8 @@ std::string handle_pyerror()
 shared_ptr<PythonApi> getPythonApi()
 {
   Py_Initialize();
+  _import_array();
+  bp::numeric::array::set_module_and_type("numpy", "ndarray");
   try {
     bp::object sys_module = bp::import("sys");
     sys_module.attr("path").attr("insert")(0, ".");
@@ -80,6 +83,26 @@ shared_ptr<PythonApi> getPythonApi()
     PyErr_Print();
     throw;
   }
+}
+
+// http://stackoverflow.com/questions/10701514/how-to-return-numpy-array-from-boostpython/34023333
+bp::object array_to_numpy(TheaArray<Real> const & arr)
+{
+  npy_intp arr_size = npy_intp(arr.size());
+  // const_cast is rather horrible but we need a writable pointer
+  // in C++11, vec.data() will do the trick
+  // but you will still need to const_cast
+  Real* data = arr_size ? const_cast<Real*>(&arr[0]): static_cast<Real*>(NULL);
+
+  PyObject* obj = PyArray_SimpleNewFromData(1, &arr_size, NPY_FLOAT, data);
+  bp::handle<> handle(obj);
+  bp::numeric::array nparr(handle);
+  // The problem of returning nparr is twofold: firstly the user can modify
+  // the data which will betray the const-correctness
+  // Secondly the lifetime of the data is managed by the C++ API and not the
+  // lifetime of the numpy array whatsoever. But we have a simple solution.
+  // Copy the object. numpy owns the copy now.
+  return nparr.copy();
 }
 
 
@@ -122,7 +145,8 @@ std::vector<Camera> PythonApi::getCameras()
   PYTHON_API_CATCH()
 }
 
-std::vector<std::string> PythonApi::retrieveImages(std::vector<ClickedPoint2D> const & clicked_points)
+std::vector<std::string> PythonApi::retrieveImages(std::vector<ClickedPoint2D> const & clicked_points,
+    TheaArray<Real> const & feat_3D)
 {
   try {
     if (verbose_)
@@ -133,7 +157,9 @@ std::vector<std::string> PythonApi::retrieveImages(std::vector<ClickedPoint2D> c
       clicked_points_py.append(it->to_pyobj());
     }
 
-    bp::object image_list = self_.attr("retrieve_images")(clicked_points_py);
+    // Convert feature stored in a vector to a numpy array
+    bp::object feat_3D_py = array_to_numpy(feat_3D);
+    bp::object image_list = self_.attr("retrieve_images")(clicked_points_py, feat_3D_py);
     std::vector<std::string> ret = toStdVector<std::string>(image_list);
     if (verbose_)
       THEA_CONSOLE << "PythonApi: Retrieved images.";

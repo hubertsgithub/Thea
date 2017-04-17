@@ -106,8 +106,8 @@ template<typename T>
 inline
 std::vector<T> toStdVector(bp::object const & iterable)
 {
-    return std::vector<T>(bp::stl_input_iterator<T>(iterable),
-                             bp::stl_input_iterator<T>());
+  return std::vector<T>(bp::stl_input_iterator<T>(iterable),
+                            bp::stl_input_iterator<T>());
 }
 
 // From: http://stackoverflow.com/questions/1418015/how-to-get-python-exception-text
@@ -143,7 +143,8 @@ class PythonApi
      * Retrieves images which have the most relevant materials based on the
      * clicked 2D points for each rendered view of the current shape.
      */
-    std::vector<std::string> retrieveImages(std::vector<ClickedPoint2D> const & clicked_points);
+    std::vector<std::string> retrieveImages(std::vector<ClickedPoint2D> const & clicked_points,
+        TheaArray<Real> const & feat_3D);
 
 }; // class PythonApi
 
