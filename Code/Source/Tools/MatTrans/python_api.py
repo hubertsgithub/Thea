@@ -1,8 +1,6 @@
 import os
 import json
 import numpy as np
-from scipy.ndimage.interpolation import map_coordinates
-import h5py
 import app_models
 
 
@@ -14,6 +12,35 @@ def build_idx_dic(items, show_progress=False):
         item: i
         for i, item in enumerate(items)
     }
+
+
+# http://stackoverflow.com/questions/12729228/simple-efficient-bilinear-interpolation-of-images-in-numpy-and-python
+def bilinear_interpolate(im, x, y):
+    x = np.asarray(x)
+    y = np.asarray(y)
+    assert x.shape == y.shape
+
+    x0 = np.floor(x).astype(int)
+    x1 = x0 + 1
+    y0 = np.floor(y).astype(int)
+    y1 = y0 + 1
+
+    x0 = np.clip(x0, 0, im.shape[1] - 1)
+    x1 = np.clip(x1, 0, im.shape[1] - 1)
+    y0 = np.clip(y0, 0, im.shape[0] - 1)
+    y1 = np.clip(y1, 0, im.shape[0] - 1)
+
+    Ia = im[y0, x0, ...]
+    Ib = im[y1, x0, ...]
+    Ic = im[y0, x1, ...]
+    Id = im[y1, x1, ...]
+
+    wa = (x1-x) * (y1-y)
+    wb = (x1-x) * (y-y0)
+    wc = (x-x0) * (y1-y)
+    wd = (x-x0) * (y-y0)
+
+    return wa*Ia + wb*Ib + wc*Ic + wd*Id
 
 
 class PythonApi:
@@ -50,7 +77,8 @@ class PythonApi:
         return camera_dic.values()
 
     def retrieve_images(self, clicked_points, feat_3D):
-        print feat_3D
+        photo_paths = []
+        feat_2D_arr = []
         for clicked_point in clicked_points:
             cid = clicked_point['camera_id']
             if cid not in self.shape.shape_view_dic:
@@ -69,10 +97,20 @@ class PythonApi:
                 feat_2D = self.features_2D[self.photo_id_to_idx[pr.photo_id]]
 
                 # Interpolate feature map
-                col_idx = x * feat_2D.shape[1]
-                row_idx = y * feat_2D.shape[0]
-                #point_feat_2D = map_coordinates(feat_2D, coordinates=[[row_idx, col_idx]], order=1)
-                #print point_feat_2D
+                point_feat_2D = bilinear_interpolate(
+                    im=feat_2D,
+                    x=x * feat_2D.shape[1],
+                    y=y * feat_2D.shape[0],
+                )
+                photo_paths.append(pr.photo_path.encode('utf-8'))
+                feat_2D_arr.append(point_feat_2D)
 
-        return ['hahha.png']
+        # Compute distances
+        dists = np.linalg.norm(
+            np.array(feat_2D_arr) - feat_3D[np.newaxis, :], axis=1
+        )
+        # Sort path by closest distance
+        photo_paths = [photo_paths[idx] for idx in np.argsort(dists)]
+
+        return photo_paths[:10]
 

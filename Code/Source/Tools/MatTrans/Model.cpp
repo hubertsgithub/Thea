@@ -484,6 +484,7 @@ Model::processPick()
   std::vector<std::string> image_paths = python_api->retrieveImages(
       clicked_points, features[(array_size_t)picked_feat_pt_index]);
   THEA_CONSOLE << image_paths[0];
+  // TODO: Load images and show in new window
 }
 
 void
@@ -630,13 +631,6 @@ Model::loadShapeData(std::string const & dataset_dir_,
   THEA_CONSOLE << "Initialized PythonApi";
 
   python_api->loadResources(dataset_dir_, experiment_dir_, shape_data_path_);
-
-  std::vector<PA::ClickedPoint2D> clicked_points;
-  Vector2 pt_2D;
-  clicked_points.push_back(PA::ClickedPoint2D(1, pt_2D));
-  std::vector<std::string> image_paths = python_api->retrieveImages(
-      clicked_points, features[0]);
-  THEA_CONSOLE << image_paths[0];
 
   return true;
 }
