@@ -72,7 +72,7 @@ shared_ptr<PythonApi> getPythonApi()
   bp::numeric::array::set_module_and_type("numpy", "ndarray");
   try {
     bp::object sys_module = bp::import("sys");
-    sys_module.attr("path").attr("insert")(0, ".");
+    sys_module.attr("path").attr("insert")(0, "python");
     bp::object module = bp::import("python_api");
     bp::object pythonApi = module.attr("PythonApi")();
     THEA_CONSOLE << "PythonApi: Created PythonApi python object.";
