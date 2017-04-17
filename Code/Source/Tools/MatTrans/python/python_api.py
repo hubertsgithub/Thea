@@ -1,46 +1,10 @@
-import os
 import json
+import os
+
 import numpy as np
+
 import app_models
-
-
-def build_idx_dic(items, show_progress=False):
-    #if show_progress:
-        #items = progress_bar(items)
-
-    return {
-        item: i
-        for i, item in enumerate(items)
-    }
-
-
-# http://stackoverflow.com/questions/12729228/simple-efficient-bilinear-interpolation-of-images-in-numpy-and-python
-def bilinear_interpolate(im, x, y):
-    x = np.asarray(x)
-    y = np.asarray(y)
-    assert x.shape == y.shape
-
-    x0 = np.floor(x).astype(int)
-    x1 = x0 + 1
-    y0 = np.floor(y).astype(int)
-    y1 = y0 + 1
-
-    x0 = np.clip(x0, 0, im.shape[1] - 1)
-    x1 = np.clip(x1, 0, im.shape[1] - 1)
-    y0 = np.clip(y0, 0, im.shape[0] - 1)
-    y1 = np.clip(y1, 0, im.shape[0] - 1)
-
-    Ia = im[y0, x0, ...]
-    Ib = im[y1, x0, ...]
-    Ic = im[y0, x1, ...]
-    Id = im[y1, x1, ...]
-
-    wa = (x1-x) * (y1-y)
-    wb = (x1-x) * (y-y0)
-    wc = (x-x0) * (y1-y)
-    wd = (x-x0) * (y-y0)
-
-    return wa*Ia + wb*Ib + wc*Ic + wd*Id
+from utils import bilinear_interpolate, build_idx_dic
 
 
 class PythonApi:
@@ -113,4 +77,3 @@ class PythonApi:
         photo_paths = [photo_paths[idx] for idx in np.argsort(dists)]
 
         return photo_paths[:10]
-
