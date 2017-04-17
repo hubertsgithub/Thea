@@ -37,7 +37,7 @@ class AppShape:
 
 class ShapeView:
     def __init__(self, camera_id, camera_path,
-                 rendered_view_path, bb_path, photo_retrievals):
+                 rendered_view_path, bb_path, img_size, photo_retrievals):
         # ID of the camera settings which were used to render this shape view.
         self.camera_id = camera_id
         # Relative path to the file which contains the pose of the camera
@@ -49,6 +49,8 @@ class ShapeView:
         # Relative path to the file which contains bounding box information
         # (relative to the experiment root directory)
         self.bb_path = bb_path
+        # Size of the rendered shape view image: [width, height] in pixels.
+        self.img_size = img_size
         # Retrieved photos sorted by feature distance in ascending order (so
         # best/closest retrieval first)
         self.photo_retrievals = photo_retrievals
@@ -59,6 +61,7 @@ class ShapeView:
             camera_path=self.camera_path,
             rendered_view_path=self.rendered_view_path,
             bb_path=self.bb_path,
+            img_size=self.img_size,
             photo_retrievals=[pr.get_dict() for pr in self.photo_retrievals],
         )
 
@@ -77,12 +80,13 @@ class ShapeView:
             camera_path=json_data['camera_path'],
             rendered_view_path=json_data['rendered_view_path'],
             bb_path=json_data['bb_path'],
+            img_size=json_data['img_size'],
             photo_retrievals=photo_retrievals,
         )
 
 
 class PhotoRetrieval:
-    def __init__(self, photo_id, photo_path, bb_path, feature_dist):
+    def __init__(self, photo_id, photo_path, bb_path, img_size, feature_dist):
         # ID of the retrieved photo in the Mattrans database
         self.photo_id = photo_id
         # Relative path to the image file (relative to the dataset root directory)
@@ -90,6 +94,8 @@ class PhotoRetrieval:
         # Relative path to the file which contains bounding box information
         # (relative to the experiment root directory)
         self.bb_path = bb_path
+        # Size of the photo: [width, height] in pixels.
+        self.img_size = img_size
         # HoG distance between the shape view's HoG features and the photo's
         # HoG features
         self.feature_dist = feature_dist
@@ -99,6 +105,7 @@ class PhotoRetrieval:
             photo_id=self.photo_id,
             photo_path=self.photo_path,
             bb_path=self.bb_path,
+            img_size=self.img_size,
             feature_dist=self.feature_dist,
         )
 
@@ -111,6 +118,7 @@ class PhotoRetrieval:
             photo_id=json_data['photo_id'],
             photo_path=json_data['photo_path'],
             bb_path=json_data['bb_path'],
+            img_size=json_data['img_size'],
             feature_dist=json_data['feature_dist'],
         )
 

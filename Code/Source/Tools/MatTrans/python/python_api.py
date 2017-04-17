@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 import app_models
-from utils import bilinear_interpolate, build_idx_dic
+from utils import bilinear_interpolate, build_idx_dic, load_bbox, trafo_coords
 
 
 class PythonApi:
@@ -51,11 +51,21 @@ class PythonApi:
 
             # Get all retrieved photos corresponding to this shape view
             sv = self.shape.shape_view_dic[cid]
+            qbbox = load_bbox(os.path.join(self.experiment_dir, sv.bb_path))
+
             for pr in sv.photo_retrievals:
                 # TODO: Figure out what coordinate system the 2D point is in,
                 # now we assume both coordinates are between [0, 1]
                 x = clicked_point['pt_2D']['x']
                 y = clicked_point['pt_2D']['y']
+
+                # TODO: This is incorrect, probably we want to transform the
+                # other way
+                # Align query and retrieved image based on bounding boxes
+                rbbox = load_bbox(os.path.join(self.experiment_dir, pr.bb_path))
+                x, y = trafo_coords(
+                    qbbox=qbbox, qsz=sv.img_size, rbbox=rbbox, rsz=pr.img_size,
+                    rx=x, ry=y)
 
                 # Get 2D feature for the whole photo
                 feat_2D = self.features_2D[self.photo_id_to_idx[pr.photo_id]]
@@ -66,7 +76,8 @@ class PythonApi:
                     x=x * feat_2D.shape[1],
                     y=y * feat_2D.shape[0],
                 )
-                photo_paths.append(pr.photo_path.encode('utf-8'))
+                photo_paths.append(os.path.join(
+                    self.dataset_dir, pr.photo_path.encode('utf-8')))
                 feat_2D_arr.append(point_feat_2D)
 
         # Compute distances
