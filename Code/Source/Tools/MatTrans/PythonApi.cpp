@@ -49,20 +49,20 @@ namespace PA {
 // From: http://stackoverflow.com/questions/1418015/how-to-get-python-exception-text
 std::string handle_pyerror()
 {
-    PyObject *exc, *val, *tb;
-    bp::object formatted_list;
-    PyErr_Fetch(&exc, &val, &tb);
-    bp::handle<> hexc(exc), hval(bp::allow_null(val)), htb(bp::allow_null(tb));
-    bp::object traceback(bp::import("traceback"));
-    if (!tb) {
-      bp::object format_exception_only(traceback.attr("format_exception_only"));
-      formatted_list = format_exception_only(hexc, hval);
-    } else {
-      bp::object format_exception(traceback.attr("format_exception"));
-      formatted_list = format_exception(hexc, hval, htb);
-    }
-    bp::object formatted = bp::str("\n").join(formatted_list);
-    return bp::extract<std::string>(formatted);
+  PyObject *exc, *val, *tb;
+  bp::object formatted_list;
+  PyErr_Fetch(&exc, &val, &tb);
+  bp::handle<> hexc(exc), hval(bp::allow_null(val)), htb(bp::allow_null(tb));
+  bp::object traceback(bp::import("traceback"));
+  if (!tb) {
+    bp::object format_exception_only(traceback.attr("format_exception_only"));
+    formatted_list = format_exception_only(hexc, hval);
+  } else {
+    bp::object format_exception(traceback.attr("format_exception"));
+    formatted_list = format_exception(hexc, hval, htb);
+  }
+  bp::object formatted = bp::str("\n").join(formatted_list);
+  return bp::extract<std::string>(formatted);
 }
 
 shared_ptr<PythonApi> getPythonApi()

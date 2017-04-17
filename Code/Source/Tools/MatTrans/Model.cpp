@@ -42,6 +42,7 @@
 #include "Model.hpp"
 #include "App.hpp"
 #include "BinaryInputStream.hpp"
+#include "ImageDialog.hpp"
 #include "MainWindow.hpp"
 #include "Math.hpp"
 #include "Mesh.hpp"
@@ -485,6 +486,9 @@ Model::processPick()
       clicked_points, features[(array_size_t)picked_feat_pt_index]);
   THEA_CONSOLE << image_paths[0];
   // TODO: Load images and show in new window
+  wxImageDialog image_dialog(app().getMainWindow(), image_paths, wxBITMAP_TYPE_JPEG);
+  image_dialog.ShowModal();
+  THEA_CONSOLE << "Image dialog exited.";
 }
 
 void

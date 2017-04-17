@@ -421,6 +421,8 @@ App::OnInit()
   THEA_CONSOLE << optsToString();
 
   wxImage::AddHandler(new wxPNGHandler);
+  // make sure to call this first
+  wxInitAllImageHandlers();
 
   createMainWindow();
 
