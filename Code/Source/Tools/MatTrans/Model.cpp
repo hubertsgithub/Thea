@@ -472,16 +472,16 @@ Model::processPick()
   // Features of picked point: features[(array_size_t)picked_feat_pt_index]
   THEA_CONSOLE << "Picked feature point " << picked_feat_pt_index << " at " << picked_feat_pt_position;
 
-  std::vector<PA::Camera> cameras = python_api->getCameras();
-  std::vector<PA::ClickedPoint2D> clicked_points;
-  for (std::vector<PA::Camera>::const_iterator it = cameras.begin(); it != cameras.end(); ++it) {
+  TheaArray<PA::Camera> cameras = python_api->getCameras();
+  TheaArray<PA::ClickedPoint2D> clicked_points;
+  for (TheaArray<PA::Camera>::const_iterator it = cameras.begin(); it != cameras.end(); ++it) {
     // TODO: Load camera parameters from file and compute 2D coordinate of picked point from that camera
     // it->camera_path
     Vector2 pt_2D;
     clicked_points.push_back(PA::ClickedPoint2D(it->camera_id, pt_2D));
   }
 
-  std::vector<std::string> image_paths = python_api->retrieveImages(
+  TheaArray<std::string> image_paths = python_api->retrieveImages(
       clicked_points, features[(array_size_t)picked_feat_pt_index]);
   THEA_CONSOLE << image_paths[0];
   // TODO: Load images and show in new window

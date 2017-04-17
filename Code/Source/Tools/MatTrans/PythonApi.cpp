@@ -123,16 +123,16 @@ void PythonApi::loadResources(std::string const & dataset_dir,
   PYTHON_API_CATCH()
 }
 
-std::vector<Camera> PythonApi::getCameras()
+TheaArray<Camera> PythonApi::getCameras()
 {
   try {
     if (verbose_)
       THEA_CONSOLE << "PythonApi: calling getCameras...";
     // Convert python list to C++ list
-    std::vector<bp::object> camera_list = toStdVector<bp::object>(self_.attr("get_cameras")());
+    TheaArray<bp::object> camera_list = toStdVector<bp::object>(self_.attr("get_cameras")());
     // Convert each python dictionary in list to Camera objects
-    std::vector<Camera> ret;
-    for (std::vector<bp::object>::const_iterator it = camera_list.begin(); it != camera_list.end(); ++it) {
+    TheaArray<Camera> ret;
+    for (TheaArray<bp::object>::const_iterator it = camera_list.begin(); it != camera_list.end(); ++it) {
       Camera c(*it);
       if (verbose_)
         THEA_CONSOLE << "Camera: camera_id (" << c.camera_id << "), camera_path: (" << c.camera_path << ")";
@@ -145,7 +145,7 @@ std::vector<Camera> PythonApi::getCameras()
   PYTHON_API_CATCH()
 }
 
-std::vector<std::string> PythonApi::retrieveImages(std::vector<ClickedPoint2D> const & clicked_points,
+TheaArray<std::string> PythonApi::retrieveImages(TheaArray<ClickedPoint2D> const & clicked_points,
     TheaArray<Real> const & feat_3D)
 {
   try {
@@ -153,14 +153,14 @@ std::vector<std::string> PythonApi::retrieveImages(std::vector<ClickedPoint2D> c
       THEA_CONSOLE << "PythonApi: Retrieving images...";
     // Convert C++ list into python list (also convert objects inside)
     bp::list clicked_points_py;
-    for (std::vector<ClickedPoint2D>::const_iterator it = clicked_points.begin(); it != clicked_points.end(); ++it) {
+    for (TheaArray<ClickedPoint2D>::const_iterator it = clicked_points.begin(); it != clicked_points.end(); ++it) {
       clicked_points_py.append(it->to_pyobj());
     }
 
     // Convert feature stored in a vector to a numpy array
     bp::object feat_3D_py = array_to_numpy(feat_3D);
     bp::object image_list = self_.attr("retrieve_images")(clicked_points_py, feat_3D_py);
-    std::vector<std::string> ret = toStdVector<std::string>(image_list);
+    TheaArray<std::string> ret = toStdVector<std::string>(image_list);
     if (verbose_)
       THEA_CONSOLE << "PythonApi: Retrieved images.";
     return ret;

@@ -104,9 +104,9 @@ struct ClickedPoint2D
 
 template<typename T>
 inline
-std::vector<T> toStdVector(bp::object const & iterable)
+TheaArray<T> toStdVector(bp::object const & iterable)
 {
-  return std::vector<T>(bp::stl_input_iterator<T>(iterable),
+  return TheaArray<T>(bp::stl_input_iterator<T>(iterable),
                             bp::stl_input_iterator<T>());
 }
 
@@ -137,13 +137,13 @@ class PythonApi
      * these to generate 2D points from the clicked 3D point on the shape and
      * each camera pose.
      */
-    std::vector<Camera> getCameras();
+    TheaArray<Camera> getCameras();
 
     /**
      * Retrieves images which have the most relevant materials based on the
      * clicked 2D points for each rendered view of the current shape.
      */
-    std::vector<std::string> retrieveImages(std::vector<ClickedPoint2D> const & clicked_points,
+    TheaArray<std::string> retrieveImages(TheaArray<ClickedPoint2D> const & clicked_points,
         TheaArray<Real> const & feat_3D);
 
 }; // class PythonApi
