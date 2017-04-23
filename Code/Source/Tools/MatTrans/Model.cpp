@@ -473,7 +473,12 @@ Model::processPick()
   // Position of picked point: picked_feat_pt_position
   // Features of picked point: features[(array_size_t)picked_feat_pt_index]
   THEA_CONSOLE << "Picked feature point " << picked_feat_pt_index << " at " << picked_feat_pt_position;
+  // Note: The feature point position has to be in the canonical coordinate
+  // frame which we used to render the shapes for the shape view images we
+  // compute the HoG features on!
 
+  // TODO: Load cameras only once and store them? (This is fast enough right
+  // now, so it's okay)
   TheaArray<PA::Camera> cameras = python_api->getCameras();
   TheaArray<PA::ClickedPoint2D> clicked_points;
   for (TheaArray<PA::Camera>::const_iterator it = cameras.begin(); it != cameras.end(); ++it) {
@@ -483,6 +488,7 @@ Model::processPick()
       continue;
     }
 
+    THEA_CONSOLE << "Loaded camera frame: " << cam.getFrame();
     // Project the 3D point on the screen corresponding to the camera
     Vector2 pt_2D = cam.project(picked_feat_pt_position).xy();
     THEA_CONSOLE << "Clicked point 2D projection: " << pt_2D;
@@ -495,6 +501,8 @@ Model::processPick()
     // Test if the point was occluded
     // Cast a ray and see if it intersects the shape at the same 3D point
     Ray3 ray = cam.computePickRay(pt_2D);
+    // TODO: Intersect with the shape in the canonical position here, not the
+    // transformed shape we currently see on the GUI
     Real t = rayIntersectionTime(ray);
 
     // No intersection, shouldn't happen
