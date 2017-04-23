@@ -14,6 +14,7 @@ class PythonApi:
         self.shape = None
         self.photo_id_to_idx = None
         self.features_2D = None
+        self.verbose = True
 
     def load_resources(self, dataset_dir, experiment_dir, shape_data_path):
         self.dataset_dir = dataset_dir
@@ -35,7 +36,10 @@ class PythonApi:
 
             camera_dic[camera_id] = dict(
                 camera_id=camera_id,
-                camera_path=shape_view.camera_path.encode('utf-8'),
+                camera_path=os.path.join(
+                    self.experiment_dir,
+                    shape_view.camera_path.encode('utf-8'),
+                )
             )
 
         return camera_dic.values()
@@ -52,20 +56,28 @@ class PythonApi:
             # Get all retrieved photos corresponding to this shape view
             sv = self.shape.shape_view_dic[cid]
             qbbox = load_bbox(os.path.join(self.experiment_dir, sv.bb_path))
+            if self.verbose:
+                print 'qbbox: %s' % qbbox
+
+            # Transform coordinates from [-1, 1] to [0, 1]
+            qx = (clicked_point['pt_2D']['x'] + 1) / 2
+            # Negative because y increases upwards in Thea's coordinate frame,
+            # but downwards in the image coordinate frame
+            qy = (-clicked_point['pt_2D']['y'] + 1) / 2
 
             for pr in sv.photo_retrievals:
-                # TODO: Figure out what coordinate system the 2D point is in,
-                # now we assume both coordinates are between [0, 1]
-                x = clicked_point['pt_2D']['x']
-                y = clicked_point['pt_2D']['y']
-
                 # TODO: This is incorrect, probably we want to transform the
                 # other way
                 # Align query and retrieved image based on bounding boxes
                 rbbox = load_bbox(os.path.join(self.experiment_dir, pr.bb_path))
-                x, y = trafo_coords(
+                if self.verbose:
+                    print 'rbbox: %s' % rbbox
+
+                rx, ry = trafo_coords(
                     qbbox=qbbox, qsz=sv.img_size, rbbox=rbbox, rsz=pr.img_size,
-                    rx=x, ry=y)
+                    qx=qx, qy=qy)
+                if self.verbose:
+                    print 'qx: %s, qy: %s, rx: %s, ry: %s' % (qx, qy, rx, ry)
 
                 # Get 2D feature for the whole photo
                 feat_2D = self.features_2D[self.photo_id_to_idx[pr.photo_id]]
@@ -73,8 +85,8 @@ class PythonApi:
                 # Interpolate feature map
                 point_feat_2D = bilinear_interpolate(
                     im=feat_2D,
-                    x=x * feat_2D.shape[1],
-                    y=y * feat_2D.shape[0],
+                    x=rx * feat_2D.shape[1],
+                    y=ry * feat_2D.shape[0],
                 )
                 photo_paths.append(os.path.join(
                     self.dataset_dir, pr.photo_path.encode('utf-8')))

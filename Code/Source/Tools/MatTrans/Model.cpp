@@ -477,9 +477,15 @@ Model::processPick()
   TheaArray<PA::Camera> cameras = python_api->getCameras();
   TheaArray<PA::ClickedPoint2D> clicked_points;
   for (TheaArray<PA::Camera>::const_iterator it = cameras.begin(); it != cameras.end(); ++it) {
-    Graphics::Camera cam = loadCamera(it->camera_path);
+    Graphics::Camera cam;
+		if (!loadCamera(it->camera_path, cam)) {
+      THEA_WARNING << "Couldn't load camera from path: " << it->camera_path;
+			continue;
+		}
+
     // Project the 3D point on the screen corresponding to the camera
     Vector2 pt_2D = cam.project(picked_feat_pt_position).xy();
+    THEA_CONSOLE << "Clicked point 2D: " << pt_2D;
     // Test if the point was occluded
     // Cast a ray and see if it intersects the shape at the same 3D point
 		Ray3 ray = cam.computePickRay(pt_2D);
@@ -499,10 +505,14 @@ Model::processPick()
     clicked_points.push_back(PA::ClickedPoint2D(it->camera_id, pt_2D));
   }
 
+  if (clicked_points.size() == 0) {
+    THEA_WARNING << "Clicked point was occluded from all views!";
+    return;
+  }
+
   TheaArray<std::string> image_paths = python_api->retrieveImages(
       clicked_points, features[(array_size_t)picked_feat_pt_index]);
   THEA_CONSOLE << image_paths[0];
-  // TODO: Load images and show in new window
   wxImageDialog image_dialog(app().getMainWindow(), image_paths, wxBITMAP_TYPE_JPEG);
   image_dialog.ShowModal();
   THEA_CONSOLE << "Image dialog exited.";

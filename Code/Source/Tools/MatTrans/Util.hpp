@@ -102,7 +102,7 @@ bool loadImage(Image & image, std::string const & path);
 void fixChannelOrdering(Image & image);
 
 // Load camera
-Graphics::Camera loadCamera(std::string const & camera_filepath);
+bool loadCamera(std::string const & camera_filepath, Graphics::Camera & loaded_camera);
 
 } // namespace MatTrans
 

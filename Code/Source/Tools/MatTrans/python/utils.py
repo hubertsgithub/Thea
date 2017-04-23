@@ -42,31 +42,28 @@ def bilinear_interpolate(im, x, y):
 
 
 def load_bbox(file_path):
-    bbox = np.fromfile(file_path, dtype=int, sep=" ")
-    if bbox[2] > bbox[3]:
-        bbox[1] -= (bbox[2] - bbox[3]) / 2
-        bbox[3] = bbox[2]
-    else:
-        bbox[0] -= (bbox[3] - bbox[2]) / 2
-        bbox[2] = bbox[3]
-
-    return bbox
-
-
-def trafo_coords(qbbox, qsz, rbbox, rsz, rx, ry):
     '''
-    :param qbbox: Query image bounding box.
+    Loads the bounding box as [left upper pixel x, left upper pixel y, width, height].
+    '''
+    return np.fromfile(file_path, dtype=int, sep=" ")
+
+
+def trafo_coords(qbbox, qsz, rbbox, rsz, qx, qy):
+    '''
+    Compute coordinate of the query point in the retrieval image.
+    :param qbbox: Query image bounding box [left upper pixel x, left upper pixel y, width, height].
     :param qsz: Query image size [width, height].
-    :param rbbox: Retrieved image bounding box.
+    :param rbbox: Retrieved image bounding box [left upper pixel x, left upper pixel y, width, height].
     :param rsz: Retrieved image size [width, height].
-    :param rx: Retrieved image point x coordinate.
-    :param ry: Retrieved image point y coordinate.
+    :param qx: Query image point x coordinate in [0, 1].
+    :param qy: Query image point y coordinate in [0, 1].
     '''
-    # TODO: What is it doing exactly?
-    x0, y0 = rx * rsz[0], ry * rsz[1]
-    x, y = (x0 - rbbox[0]) / rbbox[2], (y0 - rbbox[1]) / rbbox[3]
-    x1, y1 = x * qbbox[2] + qbbox[0], y * qbbox[3] + qbbox[1]
-    rx1, ry1 = 2. * x1 / qsz[0] - 1, 2. * y1 / qsz[1] - 1
-
-    return rx1, ry1
+    # Get pixel coordinates in the query image
+    qx_p, qy_p = qx * qsz[0], qy * qsz[1]
+    # Get relative coordinates to the bounding box in the query image
+    qx_bb, qy_bb = (qx_p - qbbox[0]) / qbbox[2], (qy_p - qbbox[1]) / qbbox[3]
+    # Get pixel coordinates in the retrieved image
+    rx_p, ry_p = qx_bb * rbbox[2] + rbbox[0], qy_bb * rbbox[3] + rbbox[1]
+    # Get normalized coordinates in the retrieved image
+    return rx_p / rsz[0], ry_p / rsz[1]
 
