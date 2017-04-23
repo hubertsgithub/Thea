@@ -50,6 +50,8 @@
 #include <boost/functional/hash.hpp>
 #include <cmath>
 #include <limits>
+#include <fstream>
+#include <iostream>
 
 namespace MatTrans {
 
@@ -444,6 +446,34 @@ fixChannelOrdering(Image & image)
       }
     }
   }
+}
+
+
+Graphics::Camera loadCamera(std::string const & camera_filepath)
+{
+		Matrix3 rot;
+		Vector3 tr;
+		char projtype[20];
+		Real left, right, bottom, top, near, far;
+		char updir[20];
+    std::string camstr;
+    std::ifstream camfile(camera_filepath.c_str(), std::ifstream::in);
+
+		getline(camfile, camstr);
+		camfile.close();
+
+		sscanf(camstr.c_str(), "Frame = [R: [%f, %f, %f; %f, %f, %f; %f, %f, %f], T: (%f, %f, %f)], ProjectionType = %s "
+			  "Left = %f, Right = %f, Bottom = %f, Top = %f, NearDist = %f, FarDist = %f, Projected Y increases %s",
+			  &rot[0], &rot[1], &rot[2], &rot[3], &rot[4], &rot[5], &rot[6], &rot[7], &rot[8], &tr[0], &tr[1], &tr[2], projtype,
+			  &left, &right, &bottom, &top, &near, &far, updir);
+
+		CoordinateFrame3 cf;
+		cf._setRotation(rot);
+		cf.setTranslation(tr);
+
+    Graphics::Camera cam(cf, (std::string(projtype) == "Perspective," ? Graphics::Camera::ProjectionType::PERSPECTIVE : Graphics::Camera::ProjectionType::ORTHOGRAPHIC), left, right, bottom, top, near, far, (std::string(updir) == "upwards" ? Graphics::Camera::ProjectedYDirection::UP: Graphics::Camera::ProjectedYDirection::DOWN) );
+
+		return cam;
 }
 
 } // namespace MatTrans

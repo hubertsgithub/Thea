@@ -101,6 +101,9 @@ bool loadImage(Image & image, std::string const & path);
 // Make sure image channels are in order RGB[A]. Currently works only for RGB_8U and RGBA_8U.
 void fixChannelOrdering(Image & image);
 
+// Load camera
+Graphics::Camera loadCamera(std::string const & camera_filepath);
+
 } // namespace MatTrans
 
 #endif
