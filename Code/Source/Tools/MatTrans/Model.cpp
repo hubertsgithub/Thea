@@ -478,30 +478,36 @@ Model::processPick()
   TheaArray<PA::ClickedPoint2D> clicked_points;
   for (TheaArray<PA::Camera>::const_iterator it = cameras.begin(); it != cameras.end(); ++it) {
     Graphics::Camera cam;
-		if (!loadCamera(it->camera_path, cam)) {
+    if (!loadCamera(it->camera_path, cam)) {
       THEA_WARNING << "Couldn't load camera from path: " << it->camera_path;
-			continue;
-		}
+      continue;
+    }
 
     // Project the 3D point on the screen corresponding to the camera
     Vector2 pt_2D = cam.project(picked_feat_pt_position).xy();
-    THEA_CONSOLE << "Clicked point 2D: " << pt_2D;
+    THEA_CONSOLE << "Clicked point 2D projection: " << pt_2D;
+    THEA_CONSOLE << "Clicked point 3D after projection: " << cam.project(picked_feat_pt_position);
+    if (pt_2D.x() < -1.0 || pt_2D.x() > 1.0 || pt_2D.y() < -1.0 || pt_2D.y() > 1.0) {
+      THEA_CONSOLE << "Clicked point projects outside viewport, skipping!";
+      continue;
+    }
+
     // Test if the point was occluded
     // Cast a ray and see if it intersects the shape at the same 3D point
-		Ray3 ray = cam.computePickRay(pt_2D);
-		Real t = rayIntersectionTime(ray);
+    Ray3 ray = cam.computePickRay(pt_2D);
+    Real t = rayIntersectionTime(ray);
 
     // No intersection, shouldn't happen
-		if (t < 0) {
+    if (t < 0) {
       THEA_WARNING << "Intersection expected, but did not happen!";
-			continue;
-		}
-		Vector3 pt_3D_backproj = ray.getPoint(t);
-		Real dist = (pt_3D_backproj - picked_feat_pt_position).length();
-		if (dist > 0.05f) {
+      continue;
+    }
+    Vector3 pt_3D_backproj = ray.getPoint(t);
+    Real dist = (pt_3D_backproj - picked_feat_pt_position).length();
+    if (dist > 0.05f) {
       THEA_CONSOLE << "Clicked point occluded in a view!";
-			continue;
-		}
+      continue;
+    }
     clicked_points.push_back(PA::ClickedPoint2D(it->camera_id, pt_2D));
   }
 
