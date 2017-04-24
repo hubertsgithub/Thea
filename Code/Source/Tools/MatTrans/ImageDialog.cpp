@@ -121,6 +121,13 @@ void wxImageDialog::render(wxDC&  dc)
   //dc.GetSize(&neww, &newh);
 
   dc.DrawBitmap(bitmap, 0, 0, false);
+
+  // draw a circle
+  dc.SetBrush(*wxTRANSPARENT_BRUSH); // green filling
+  dc.SetPen(wxPen(wxColor(255, 0, 0), 2)); // 2-pixels-thick red outline
+  wxPoint center(photo_list[image_num].rx * bitmap.GetWidth(), photo_list[image_num].ry * bitmap.GetHeight());
+  dc.DrawCircle(center, 5 /* radius */);
+
 }
 
 } // namespace MatTrans
