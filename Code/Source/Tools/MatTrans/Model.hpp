@@ -315,6 +315,7 @@ class Model : public GraphicsWidget, public Transformable<AffineTransform3>, pub
     bool valid_pick;
     long picked_feat_pt_index;
     Vector3 picked_feat_pt_position;
+    Vector3 picked_pt;
 
     mutable bool valid_kdtree;
     mutable KDTree * kdtree;

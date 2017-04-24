@@ -447,6 +447,7 @@ Model::pick(Ray3 const & ray)
     if (picked_feat_pt_index >= 0)
     {
       picked_feat_pt_position = feat_pts_kdtree->getElements()[picked_feat_pt_index];
+      picked_pt = p;
       valid_pick = true;
     }
 
@@ -473,9 +474,15 @@ Model::processPick()
   // Position of picked point: picked_feat_pt_position
   // Features of picked point: features[(array_size_t)picked_feat_pt_index]
   THEA_CONSOLE << "Picked feature point " << picked_feat_pt_index << " at " << picked_feat_pt_position;
+  THEA_CONSOLE << "Picked point " << picked_pt;
   // Note: The feature point position has to be in the canonical coordinate
   // frame which we used to render the shapes for the shape view images we
   // compute the HoG features on!
+
+  // Save current transform and set to canonical frame.
+  // TODO: We might not need to do this at all
+  AffineTransform3 shape_transform = kdtree->getTransform();
+  kdtree->clearTransform();
 
   // TODO: Load cameras only once and store them? (This is fast enough right
   // now, so it's okay)
@@ -490,9 +497,8 @@ Model::processPick()
 
     THEA_CONSOLE << "Loaded camera frame: " << cam.getFrame();
     // Project the 3D point on the screen corresponding to the camera
-    Vector2 pt_2D = cam.project(picked_feat_pt_position).xy();
+    Vector2 pt_2D = cam.project(picked_pt).xy();
     THEA_CONSOLE << "Clicked point 2D projection: " << pt_2D;
-    THEA_CONSOLE << "Clicked point 3D after projection: " << cam.project(picked_feat_pt_position);
     if (pt_2D.x() < -1.0 || pt_2D.x() > 1.0 || pt_2D.y() < -1.0 || pt_2D.y() > 1.0) {
       THEA_CONSOLE << "Clicked point projects outside viewport, skipping!";
       continue;
@@ -501,23 +507,28 @@ Model::processPick()
     // Test if the point was occluded
     // Cast a ray and see if it intersects the shape at the same 3D point
     Ray3 ray = cam.computePickRay(pt_2D);
-    // TODO: Intersect with the shape in the canonical position here, not the
-    // transformed shape we currently see on the GUI
-    Real t = rayIntersectionTime(ray);
+    // Intersect with the shape in the canonical frame here, not the
+    // transformed shape we currently see on the shape
+    Real t = kdtree->rayIntersectionTime<Algorithms::RayIntersectionTester>(ray);
 
     // No intersection, shouldn't happen
     if (t < 0) {
-      THEA_WARNING << "Intersection expected, but did not happen!";
+      THEA_WARNING << "Intersection expected, but did not happen! t: " << t;
       continue;
     }
     Vector3 pt_3D_backproj = ray.getPoint(t);
-    Real dist = (pt_3D_backproj - picked_feat_pt_position).length();
+    THEA_CONSOLE << "Back projected point: " << pt_3D_backproj;
+    Real dist = (pt_3D_backproj - picked_pt).length();
     if (dist > 0.05f) {
       THEA_CONSOLE << "Clicked point occluded in a view!";
       continue;
     }
     clicked_points.push_back(PA::ClickedPoint2D(it->camera_id, pt_2D));
   }
+
+  // Restore transform
+  // TODO: We might not need to do this at all
+  kdtree->setTransform(shape_transform);
 
   if (clicked_points.size() == 0) {
     THEA_WARNING << "Clicked point was occluded from all views!";
