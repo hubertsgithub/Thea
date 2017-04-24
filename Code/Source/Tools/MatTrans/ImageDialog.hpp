@@ -6,6 +6,7 @@
 #include <wx/sizer.h>
 #include <vector>
 #include <string>
+#include "PythonApi.hpp"
 
 namespace MatTrans {
 
@@ -17,11 +18,11 @@ class wxImageDialog : public wxDialog
   wxBitmap bitmap;
   wxBitmapType image_format;
   int w, h;
-  TheaArray<std::string> image_paths;
+  TheaArray<PA::PhotoData> photo_list;
   int image_num;
 
 public:
-  wxImageDialog(wxFrame* parent, TheaArray<std::string> const & image_paths_, wxBitmapType image_format_);
+  wxImageDialog(wxFrame* parent, TheaArray<PA::PhotoData> const & photo_list_, wxBitmapType image_format_);
 
   void loadCurrentImage();
   void paintEvent(wxPaintEvent & evt);

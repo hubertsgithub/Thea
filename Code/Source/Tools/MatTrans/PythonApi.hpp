@@ -102,6 +102,22 @@ struct ClickedPoint2D
   }
 };
 
+struct PhotoData
+{
+  std::string photo_path;
+  // Coordinates of 2D point corresponding to clicked point
+  Real rx;
+  Real ry;
+
+  PhotoData(std::string const & photo_path, Real rx, Real ry)
+    : photo_path(photo_path), rx(rx), ry(ry) {}
+
+  PhotoData(bp::object dic)
+    : photo_path(bp::extract<std::string>(dic["photo_path"])),
+    rx(bp::extract<Real>(dic["rx"])), ry(bp::extract<Real>(dic["ry"])) {}
+};
+
+
 template<typename T>
 inline
 TheaArray<T> toStdVector(bp::object const & iterable)
@@ -143,7 +159,7 @@ class PythonApi
      * Retrieves images which have the most relevant materials based on the
      * clicked 2D points for each rendered view of the current shape.
      */
-    TheaArray<std::string> retrieveImages(TheaArray<ClickedPoint2D> const & clicked_points,
+    TheaArray<PhotoData> retrieveImages(TheaArray<ClickedPoint2D> const & clicked_points,
         TheaArray<Real> const & feat_3D);
 
 }; // class PythonApi

@@ -44,13 +44,13 @@ END_EVENT_TABLE()
  */
 
 
-wxImageDialog::wxImageDialog(wxFrame* parent, TheaArray<std::string> const & image_paths_, wxBitmapType image_format_):
+wxImageDialog::wxImageDialog(wxFrame* parent, TheaArray<PA::PhotoData> const & photo_list_, wxBitmapType image_format_):
   wxDialog(parent, -1, "Retrieved Image")
 {
-  image_paths = image_paths_;
+  photo_list = photo_list_;
   image_format = image_format_;
-  if (image_paths.size() == 0)
-    throw Error(format("Invalid number of images: %ld", image_paths.size()));
+  if (photo_list.size() == 0)
+    throw Error(format("Invalid number of images: %ld", photo_list.size()));
 
   image_num = 0;
   loadCurrentImage();
@@ -63,7 +63,7 @@ void wxImageDialog::keyPressed(wxKeyEvent& event)
 
   if (key == WXK_LEFT) {
     image_num++;
-    if (image_num == int(image_paths.size()))
+    if (image_num == int(photo_list.size()))
       image_num = 0;
     paintNow();
   }
@@ -75,7 +75,7 @@ void wxImageDialog::keyPressed(wxKeyEvent& event)
 void wxImageDialog::loadCurrentImage()
 {
   // Load the file... ideally add a check to see if loading was successful
-  image.LoadFile(image_paths[image_num].c_str(), image_format);
+  image.LoadFile(photo_list[image_num].photo_path.c_str(), image_format);
   // Convert to bitmap for rendering
   bitmap = wxBitmap(image);
   // Resize dialog to fit the loaded image

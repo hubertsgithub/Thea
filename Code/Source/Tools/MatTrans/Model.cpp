@@ -537,10 +537,10 @@ Model::processPick()
     return;
   }
 
-  TheaArray<std::string> image_paths = python_api->retrieveImages(
+  TheaArray<PA::PhotoData> photo_list = python_api->retrieveImages(
       clicked_points, features[(array_size_t)picked_feat_pt_index]);
-  THEA_CONSOLE << image_paths[0];
-  wxImageDialog image_dialog(app().getMainWindow(), image_paths, wxBITMAP_TYPE_JPEG);
+  THEA_CONSOLE << photo_list[0].photo_path;
+  wxImageDialog image_dialog(app().getMainWindow(), photo_list, wxBITMAP_TYPE_JPEG);
   image_dialog.ShowModal();
   THEA_CONSOLE << "Image dialog exited.";
 }

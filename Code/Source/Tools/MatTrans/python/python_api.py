@@ -45,7 +45,7 @@ class PythonApi:
         return camera_dic.values()
 
     def retrieve_images(self, clicked_points, feat_3D):
-        photo_paths = []
+        photo_data = []
         feat_2D_arr = []
         for clicked_point in clicked_points:
             cid = clicked_point['camera_id']
@@ -88,8 +88,11 @@ class PythonApi:
                     x=rx * feat_2D.shape[1],
                     y=ry * feat_2D.shape[0],
                 )
-                photo_paths.append(os.path.join(
-                    self.dataset_dir, pr.photo_path.encode('utf-8')))
+                photo_data.append(dict(
+                    rx=rx, ry=ry,
+                    photo_path=os.path.join(
+                        self.dataset_dir, pr.photo_path.encode('utf-8')),
+                ))
                 feat_2D_arr.append(point_feat_2D)
 
         # Compute distances
@@ -97,6 +100,6 @@ class PythonApi:
             np.array(feat_2D_arr) - feat_3D[np.newaxis, :], axis=1
         )
         # Sort path by closest distance
-        photo_paths = [photo_paths[idx] for idx in np.argsort(dists)]
+        photo_data = [photo_data[idx] for idx in np.argsort(dists)]
 
-        return photo_paths[:10]
+        return photo_data[:10]

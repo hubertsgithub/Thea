@@ -133,10 +133,10 @@ TheaArray<Camera> PythonApi::getCameras()
     // Convert each python dictionary in list to Camera objects
     TheaArray<Camera> ret;
     for (TheaArray<bp::object>::const_iterator it = camera_list.begin(); it != camera_list.end(); ++it) {
-      Camera c(*it);
+      Camera item(*it);
       if (verbose_)
-        THEA_CONSOLE << "Camera: camera_id (" << c.camera_id << "), camera_path: (" << c.camera_path << ")";
-      ret.push_back(c);
+        THEA_CONSOLE << "Camera: camera_id (" << item.camera_id << "), camera_path: (" << item.camera_path << ")";
+      ret.push_back(item);
     }
     if (verbose_)
       THEA_CONSOLE << "PythonApi: getCameras finished.";
@@ -145,7 +145,7 @@ TheaArray<Camera> PythonApi::getCameras()
   PYTHON_API_CATCH()
 }
 
-TheaArray<std::string> PythonApi::retrieveImages(TheaArray<ClickedPoint2D> const & clicked_points,
+TheaArray<PhotoData> PythonApi::retrieveImages(TheaArray<ClickedPoint2D> const & clicked_points,
     TheaArray<Real> const & feat_3D)
 {
   try {
@@ -159,8 +159,16 @@ TheaArray<std::string> PythonApi::retrieveImages(TheaArray<ClickedPoint2D> const
 
     // Convert feature stored in a vector to a numpy array
     bp::object feat_3D_py = array_to_numpy(feat_3D);
-    bp::object image_list = self_.attr("retrieve_images")(clicked_points_py, feat_3D_py);
-    TheaArray<std::string> ret = toStdVector<std::string>(image_list);
+    TheaArray<bp::object> photo_list = toStdVector<bp::object>(
+        self_.attr("retrieve_images")(clicked_points_py, feat_3D_py));
+    // Convert each python dictionary in list to PhotoData objects
+    TheaArray<PhotoData> ret;
+    for (TheaArray<bp::object>::const_iterator it = photo_list.begin(); it != photo_list.end(); ++it) {
+      PhotoData item(*it);
+      if (verbose_)
+        THEA_CONSOLE << "PhotoData: photo_path (" << item.photo_path << "), rx: (" << item.rx << ") ry: (" << item.ry << ")";
+      ret.push_back(item);
+    }
     if (verbose_)
       THEA_CONSOLE << "PythonApi: Retrieved images.";
     return ret;
