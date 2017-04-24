@@ -519,7 +519,9 @@ Model::processPick()
     Vector3 pt_3D_backproj = ray.getPoint(t);
     THEA_CONSOLE << "Back projected point: " << pt_3D_backproj;
     Real dist = (pt_3D_backproj - picked_pt).length();
-    if (dist > 0.05f) {
+    // If the original point and the backprojected point are far away, the
+    // point is occluded in this view.
+    if (dist > 0.01f) {
       THEA_CONSOLE << "Clicked point occluded in a view!";
       continue;
     }
