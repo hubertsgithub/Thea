@@ -5,6 +5,7 @@
 #include "Error.hpp"
 #include <algorithm>
 #include <fstream>
+#include <sstream>
 #include <wx/wx.h>
 #include <wx/sizer.h>
 
@@ -58,8 +59,8 @@ wxImageDialog::wxImageDialog(wxFrame* parent, TheaArray<PA::PhotoData> const & p
     throw Error(format("Invalid number of images: %ld", photo_list.size()));
 
   image_num = 0;
-  loadCurrentImage();
   show_what = RETRIEVED_PHOTO;
+  loadCurrentImage();
   THEA_CONSOLE << "wxImageDialog constructor finished.";
 }
 
@@ -85,12 +86,20 @@ void wxImageDialog::mouseRightDown(wxMouseEvent& event) {
   // Switch between shape view and retrieved image
   if (show_what == RETRIEVED_PHOTO) {
     show_what = SHAPE_VIEW;
-    SetSize(wxDefaultCoord, wxDefaultCoord, shape_view_image_bitmap.GetWidth(), shape_view_image_bitmap.GetHeight());
   } else if (show_what == SHAPE_VIEW) {
     show_what = RETRIEVED_PHOTO;
-    SetSize(wxDefaultCoord, wxDefaultCoord, retrieved_image_bitmap.GetWidth(), retrieved_image_bitmap.GetHeight());
   }
+  updateSize();
   paintNow();
+}
+
+void wxImageDialog::updateSize()
+{
+  if (show_what == RETRIEVED_PHOTO) {
+    SetClientSize(retrieved_image_bitmap.GetWidth(), retrieved_image_bitmap.GetHeight());
+  } else if (show_what == SHAPE_VIEW) {
+    SetClientSize(shape_view_image_bitmap.GetWidth(), shape_view_image_bitmap.GetHeight());
+  }
 }
 
 void wxImageDialog::resizeKeepAspect(int mindim, wxImage& to_be_resized)
@@ -114,13 +123,14 @@ void wxImageDialog::loadCurrentImage()
   resizeKeepAspect(600, shape_view_image);
   // Convert to bitmap for rendering
   shape_view_image_bitmap = wxBitmap(shape_view_image);
+
   // Load the file... ideally add a check to see if loading was successful
   retrieved_image.LoadFile(photo_list[image_num].photo_path.c_str(), wxBITMAP_TYPE_JPEG);
   resizeKeepAspect(600, retrieved_image);
   // Convert to bitmap for rendering
   retrieved_image_bitmap = wxBitmap(retrieved_image);
 
-  SetSize(wxDefaultCoord, wxDefaultCoord, retrieved_image_bitmap.GetWidth(), retrieved_image_bitmap.GetHeight());
+  updateSize();
 }
 
 /*
@@ -159,29 +169,35 @@ void wxImageDialog::paintNow()
 void wxImageDialog::render(wxDC& dc)
 {
   const wxBitmap* bitmap_to_show;
-  float point_x;
-  float point_y;
+  float point_x = 0;
+  float point_y = 0;
+  std::stringstream text_builder;
   if (show_what == RETRIEVED_PHOTO) {
     bitmap_to_show = &retrieved_image_bitmap;
     point_x = photo_list[image_num].rx * bitmap_to_show->GetWidth();
     point_y = photo_list[image_num].ry * bitmap_to_show->GetHeight();
+    text_builder << "Retrieved photo, rank " << image_num;
   } else if (show_what == SHAPE_VIEW) {
     bitmap_to_show = &shape_view_image_bitmap;
     point_x = photo_list[image_num].qx * bitmap_to_show->GetWidth();
     point_y = photo_list[image_num].qy * bitmap_to_show->GetHeight();
+    text_builder << "Shape view, rank " << image_num;
   } else {
     bitmap_to_show = NULL;
   }
-  //int neww, newh;
-  //dc.GetSize(&neww, &newh);
+  std::string text = text_builder.str();
 
   dc.DrawBitmap(*bitmap_to_show, 0, 0, false);
 
-  // draw a circle
+  // Draw a circle
   dc.SetBrush(*wxTRANSPARENT_BRUSH); // green filling
   dc.SetPen(wxPen(wxColor(255, 0, 0), 2)); // 2-pixels-thick red outline
   wxPoint center(point_x, point_y);
   dc.DrawCircle(center, 5 /* radius */);
+
+  // Draw retrieval image rank
+  dc.SetTextForeground(wxColor(255, 0, 0));
+  dc.DrawText(wxString(text), 5, 5);
 }
 
 } // namespace MatTrans

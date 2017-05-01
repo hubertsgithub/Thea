@@ -30,6 +30,7 @@ class wxImageDialog : public wxDialog
   ShowWhat show_what;
 
   void resizeKeepAspect(int mindim, wxImage& to_be_resized);
+  void updateSize();
 
 public:
   wxImageDialog(wxFrame* parent, TheaArray<PA::PhotoData> const & photo_list_);
