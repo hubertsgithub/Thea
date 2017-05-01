@@ -104,16 +104,27 @@ struct ClickedPoint2D
 
 struct PhotoData
 {
+  std::string shape_view_path;
+  // Coordinates of 2D point corresponding to clicked point in the shape view
+  // image
+  Real qx;
+  Real qy;
+
   std::string photo_path;
-  // Coordinates of 2D point corresponding to clicked point
+  // Coordinates of 2D point corresponding to clicked point in the retrieved
+  // image
   Real rx;
   Real ry;
 
-  PhotoData(std::string const & photo_path, Real rx, Real ry)
-    : photo_path(photo_path), rx(rx), ry(ry) {}
+  PhotoData(std::string const & shape_view_path, Real qx, Real qy, std::string
+      const & photo_path, Real rx, Real ry)
+    : shape_view_path(shape_view_path), qx(qx), qy(qy), photo_path(photo_path),
+    rx(rx), ry(ry) {}
 
   PhotoData(bp::object dic)
-    : photo_path(bp::extract<std::string>(dic["photo_path"])),
+    : shape_view_path(bp::extract<std::string>(dic["shape_view_path"])),
+    qx(bp::extract<Real>(dic["qx"])), qy(bp::extract<Real>(dic["qy"])),
+    photo_path(bp::extract<std::string>(dic["photo_path"])),
     rx(bp::extract<Real>(dic["rx"])), ry(bp::extract<Real>(dic["ry"])) {}
 };
 

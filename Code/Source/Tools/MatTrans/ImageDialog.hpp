@@ -14,15 +14,25 @@ using namespace Thea;
 
 class wxImageDialog : public wxDialog
 {
-  wxImage image;
-  wxBitmap bitmap;
-  wxBitmapType image_format;
+  enum ShowWhat
+  {
+    RETRIEVED_PHOTO,
+    SHAPE_VIEW
+  };
+
+  wxImage shape_view_image;
+  wxBitmap shape_view_image_bitmap;
+  wxImage retrieved_image;
+  wxBitmap retrieved_image_bitmap;
   int w, h;
   TheaArray<PA::PhotoData> photo_list;
   int image_num;
+  ShowWhat show_what;
+
+  void resizeKeepAspect(int mindim, wxImage& to_be_resized);
 
 public:
-  wxImageDialog(wxFrame* parent, TheaArray<PA::PhotoData> const & photo_list_, wxBitmapType image_format_);
+  wxImageDialog(wxFrame* parent, TheaArray<PA::PhotoData> const & photo_list_);
 
   void loadCurrentImage();
   void paintEvent(wxPaintEvent & evt);
@@ -41,6 +51,8 @@ public:
    void keyReleased(wxKeyEvent& event);
    */
   void keyPressed(wxKeyEvent& event);
+  void mouseLeftDown(wxMouseEvent& event);
+  void mouseRightDown(wxMouseEvent& event);
 
   DECLARE_EVENT_TABLE()
 };

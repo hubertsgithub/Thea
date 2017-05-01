@@ -57,6 +57,7 @@ class PythonApi:
             sv = self.shape.shape_view_dic[cid]
             qbbox = load_bbox(os.path.join(self.experiment_dir, sv.bb_path))
             if self.verbose:
+                print 'Loaded bounding box for query shape view from "%s"' % os.path.join(self.experiment_dir, sv.bb_path)
                 print 'qbbox: %s' % qbbox
 
             # Transform coordinates from [-1, 1] to [0, 1]
@@ -71,6 +72,7 @@ class PythonApi:
                 # Align query and retrieved image based on bounding boxes
                 rbbox = load_bbox(os.path.join(self.experiment_dir, pr.bb_path))
                 if self.verbose:
+                    print 'Loaded bounding box for retrieved image from "%s"' % os.path.join(self.experiment_dir, pr.bb_path)
                     print 'rbbox: %s' % rbbox
 
                 rx, ry = trafo_coords(
@@ -89,6 +91,9 @@ class PythonApi:
                     y=ry * feat_2D.shape[0],
                 )
                 photo_data.append(dict(
+                    qx=qx, qy=qy,
+                    shape_view_path=os.path.join(
+                        self.experiment_dir, sv.rendered_view_path.encode('utf-8')),
                     rx=rx, ry=ry,
                     photo_path=os.path.join(
                         self.dataset_dir, pr.photo_path.encode('utf-8')),
