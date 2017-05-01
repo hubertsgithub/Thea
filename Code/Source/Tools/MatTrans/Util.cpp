@@ -41,6 +41,8 @@
 
 #include "Util.hpp"
 #include "Math.hpp"
+#include "Mesh.hpp"
+#include "../../Algorithms/RayIntersectionTester.hpp"
 #include "../../Graphics/Camera.hpp"
 #include "../../Graphics/RenderSystem.hpp"
 #include "../../Ball3.hpp"
@@ -477,6 +479,55 @@ bool loadCamera(std::string const & camera_filepath, Graphics::Camera & loaded_c
 
   loaded_camera = cam;
   return true;
+}
+
+
+TheaArray<PA::ClickedPoint2D> projectClickedPoint(
+    TheaArray<PA::Camera> const & cameras, Vector3 const & picked_pt,
+    Thea::Algorithms::MeshKDTree<Mesh> const & kdtree)
+{
+  TheaArray<PA::ClickedPoint2D> clicked_points;
+  for (TheaArray<PA::Camera>::const_iterator it = cameras.begin(); it != cameras.end(); ++it) {
+    Graphics::Camera cam;
+    if (!loadCamera(it->camera_path, cam)) {
+      THEA_WARNING << "Couldn't load camera from path: " << it->camera_path;
+      continue;
+    }
+
+    THEA_CONSOLE << "Loaded camera frame: " << cam.getFrame();
+    // Project the 3D point on the screen corresponding to the camera
+    Vector2 pt_2D = cam.project(picked_pt).xy();
+    THEA_CONSOLE << "Clicked point 2D projection: " << pt_2D;
+    if (pt_2D.x() < -1.0 || pt_2D.x() > 1.0 || pt_2D.y() < -1.0 || pt_2D.y() > 1.0) {
+      THEA_CONSOLE << "Clicked point projects outside viewport, skipping!";
+      continue;
+    }
+
+    // Test if the point was occluded
+    // Cast a ray and see if it intersects the shape at the same 3D point
+    Ray3 ray = cam.computePickRay(pt_2D);
+    // Intersect with the shape in the canonical frame here, not the
+    // transformed shape we currently see on the shape
+    Real t = kdtree.rayIntersectionTime<Algorithms::RayIntersectionTester>(ray);
+
+    // No intersection, shouldn't happen
+    if (t < 0) {
+      THEA_WARNING << "Intersection expected, but did not happen! t: " << t;
+      continue;
+    }
+    Vector3 pt_3D_backproj = ray.getPoint(t);
+    THEA_CONSOLE << "Back projected point: " << pt_3D_backproj;
+    Real dist = (pt_3D_backproj - picked_pt).length();
+    // If the original point and the backprojected point are far away, the
+    // point is occluded in this view.
+    if (dist > 0.01f) {
+      THEA_CONSOLE << "Clicked point occluded in a view!";
+      continue;
+    }
+    clicked_points.push_back(PA::ClickedPoint2D(it->camera_id, pt_2D));
+  }
+
+  return clicked_points;
 }
 
 } // namespace MatTrans

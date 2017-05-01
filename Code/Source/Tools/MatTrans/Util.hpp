@@ -43,6 +43,9 @@
 #define __MatTrans_Util_hpp__
 
 #include "Common.hpp"
+#include "PythonApi.hpp"
+#include "MeshFwd.hpp"
+#include "../../Algorithms/MeshKDTree.hpp"
 #include "../../Colors.hpp"
 #include "../../Ray3.hpp"
 
@@ -103,6 +106,12 @@ void fixChannelOrdering(Image & image);
 
 // Load camera
 bool loadCamera(std::string const & camera_filepath, Graphics::Camera & loaded_camera);
+
+// Compute 2D screen coordinates (in [-1, 1]) of a 3D point from a list of cameras
+TheaArray<PA::ClickedPoint2D> projectClickedPoint(
+    TheaArray<PA::Camera> const & cameras, Vector3 const & picked_pt,
+    Thea::Algorithms::MeshKDTree<Mesh> const & kdtree);
+
 
 } // namespace MatTrans
 
