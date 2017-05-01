@@ -112,6 +112,10 @@ TheaArray<PA::ClickedPoint2D> projectClickedPoint(
     TheaArray<PA::Camera> const & cameras, Vector3 const & picked_pt,
     Thea::Algorithms::MeshKDTree<Mesh> const & kdtree);
 
+// Load 3D features and feature points associated with a shape
+bool load3DFeatures(
+    std::string const & path, TheaArray<Vector3> & feat_pts,
+    TheaArray< TheaArray<Real> > & features);
 
 } // namespace MatTrans
 
