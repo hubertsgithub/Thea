@@ -86,6 +86,7 @@ class App : public wxApp
       std::string dataset_dir;                             ///< Path to directory containing shapes and images.
       std::string experiment_dir;                          ///< Path to directory containing generated data for the Mattrans experiments (retrievals, etc.).
       std::string shape_data;                              ///< Path to file containing Mattrans information of the loaded shape.
+      bool gen_html;                                       ///< Generate HTML for a shape instead of showing app?
       std::string elem_labels;                             ///< Path to directory/file containing face/point labels to load.
 
       bool accentuate_features;                             ///< Make feature distributions easier to view?
@@ -161,6 +162,9 @@ class App : public wxApp
 
     /** Create the application's rendersystem. */
     void createRenderSystem();
+
+    /** Generate HTML results page for each given shape. */
+    void generateHtml();
 
     Options opts;
     MainWindow * main_window;

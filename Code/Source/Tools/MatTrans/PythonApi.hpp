@@ -171,7 +171,7 @@ class PythonApi
      * clicked 2D points for each rendered view of the current shape.
      */
     TheaArray<PhotoData> retrieveImages(TheaArray<ClickedPoint2D> const & clicked_points,
-        TheaArray<Real> const & feat_3D);
+        TheaArray<Real> const & feat_3D, bool do_visualize = false);
 
 }; // class PythonApi
 

@@ -323,26 +323,6 @@ Model::invalidateVertexKDTree()
   valid_vertex_kdtree = false;
 }
 
-namespace ModelInternal {
-
-struct CollectVerticesFunctor
-{
-  CollectVerticesFunctor(TheaArray<MeshVertex *> * verts_) : verts(verts_) {}
-
-  bool operator()(Mesh & mesh)
-  {
-    for (Mesh::VertexIterator vi = mesh.verticesBegin(); vi != mesh.verticesEnd(); ++vi)
-      verts->push_back(&(*vi));
-
-    return false;
-  }
-
-  TheaArray<MeshVertex *> * verts;
-
-}; // struct CollectVerticesFunctor
-
-} // namespace ModelInternal
-
 void
 Model::updateVertexKDTree() const
 {
@@ -351,7 +331,7 @@ Model::updateVertexKDTree() const
   vertex_kdtree->clear(false);
 
   TheaArray<MeshVertex *> verts;
-  ModelInternal::CollectVerticesFunctor func(&verts);
+  CollectVerticesFunctor func(&verts);
   mesh_group->forEachMeshUntil(&func);
   vertex_kdtree->init(verts.begin(), verts.end());
 

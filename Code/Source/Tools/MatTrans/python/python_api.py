@@ -4,10 +4,12 @@ import os
 import numpy as np
 
 import app_models
-from utils import bilinear_interpolate, build_idx_dic, load_bbox, trafo_coords
+from utils import bilinear_interpolate, build_idx_dic, load_bbox, trafo_coords, ensuredir
+import shutil
 
 
 class PythonApi:
+
     def __init__(self):
         self.dataset_dir = None
         self.experiment_dir = None
@@ -15,6 +17,8 @@ class PythonApi:
         self.photo_id_to_idx = None
         self.features_2D = None
         self.verbose = True
+
+        os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
     def load_resources(self, dataset_dir, experiment_dir, shape_data_path):
         self.dataset_dir = dataset_dir
@@ -44,7 +48,7 @@ class PythonApi:
 
         return camera_dic.values()
 
-    def retrieve_images(self, clicked_points, feat_3D):
+    def retrieve_images(self, clicked_points, feat_3D, do_visualize):
         photo_data = []
         feat_2D_arr = []
         for clicked_point in clicked_points:
@@ -105,6 +109,53 @@ class PythonApi:
             np.array(feat_2D_arr) - feat_3D[np.newaxis, :], axis=1
         )
         # Sort path by closest distance
-        photo_data = [photo_data[idx] for idx in np.argsort(dists)]
+        photo_data_sorted = []
+        for idx in np.argsort(dists):
+            pd = dict(photo_data[idx])
+            pd['fet_dist'] = dists[idx]
+            photo_data_sorted.append(pd)
 
-        return photo_data[:10]
+        ret = photo_data_sorted[:10]
+
+        if do_visualize:
+            self.visualize_retrievals(ret)
+
+        return ret
+
+    def _render_webpage(self, webpage_context):
+        # Running django's template engine...
+        from django.template import Context
+        from django.template.loader import get_template
+        t = get_template('python/shape_retrieval_results.html')
+
+        c = Context(webpage_context)
+        webpage_raw = t.render(c)
+        return webpage_raw
+
+    def visualize_retrievals(self, photo_data):
+        ''' Generates a HTML page to show the results. '''
+        results_dir = 'results'
+        shape_dir = os.path.join(results_dir, str(self.shape.shape_id))
+        ensuredir(shape_dir)
+
+        for photo_dic in photo_data:
+            # Copy photo files
+            shape_view_target_path = os.path.join(
+                shape_dir, os.path.basename(photo_dic['shape_view_path'])
+            )
+            shutil.copyfile(photo_dic['shape_view_path'], shape_view_target_path)
+            photo_target_path = os.path.join(
+                shape_dir, os.path.basename(photo_dic['photo_path'])
+            )
+            shutil.copyfile(photo_dic['photo_path'], photo_target_path)
+
+            # Generate and save HTML page for the retrieval results
+            webpage_context = dict(photo_dic)
+            webpage_context['shape_view_path'] = shape_view_target_path
+            webpage_context['photo_path'] = photo_target_path
+            webpage_context['STATIC_URL'] = ''
+
+            webpage_raw = self._render_webpage(webpage_context)
+            with open(os.path.join(shape_dir, '%s.html' % self.shape.shape_id), 'w') as fout:
+                fout.write(webpage_raw)
+

@@ -41,10 +41,18 @@
 
 #include "App.hpp"
 #include "MainWindow.hpp"
+#include "MeshFwd.hpp"
+#include "Mesh.hpp"
+#include "PythonApi.hpp"
+#include "Util.hpp"
+#include "../../Algorithms/KDTreeN.hpp"
+#include "../../Algorithms/MetricL2.hpp"
+#include "../../Algorithms/RayIntersectionTester.hpp"
 #include "../../Application.hpp"
 #include "../../FilePath.hpp"
 #include "../../FileSystem.hpp"
 #include "../../Plugin.hpp"
+#include "../../Graphics/MeshCodec.hpp"
 #include "../../Graphics/RenderSystem.hpp"
 #include <wx/cmdline.h>
 #include <wx/image.h>
@@ -59,9 +67,11 @@ IMPLEMENT_APP(MatTrans::App);
 namespace MatTrans {
 
 App::Options::Options()
-: accentuate_features(false), color_cube_features(false), show_normals(false), show_graph(false), bg_plain(false),
-  bg_color(ColorRGB::black()), two_sided(true), flat(false), material(0.3f, 0.7f, 0.2f, 25), fancy_points(false),
-  fancy_colors(false), point_scale(1), no_axes(false)
+: gen_html(false), accentuate_features(false), color_cube_features(false),
+  show_normals(false), show_graph(false), bg_plain(false),
+  bg_color(ColorRGB::black()), two_sided(true), flat(false),
+  material(0.3f, 0.7f, 0.2f, 25), fancy_points(false), fancy_colors(false),
+  point_scale(1), no_axes(false)
 {
 }
 
@@ -90,6 +100,7 @@ App::optsToString() const
       << "\n  dataset-dir = " << opts.dataset_dir
       << "\n  experiment-dir = " << opts.experiment_dir
       << "\n  shape-data = " << opts.shape_data
+      << "\n  gen-html = " << opts.gen_html
       << "\n  elem-labels = " << opts.elem_labels
       << "\n  emph-features = " << opts.accentuate_features
       << "\n  color-cube = " << opts.color_cube_features
@@ -230,6 +241,7 @@ App::parseOptions(std::vector<std::string> const & args)
           ("dataset-dir",          po::value<std::string>(&opts.dataset_dir), "Directory containing shapes and images")
           ("experiment-dir",       po::value<std::string>(&opts.experiment_dir), "Directory containing generated data for the Mattrans experiments (retrievals, etc.)")
           ("shape-data",           po::value<std::string>(&opts.shape_data), "File containing Mattrans information of the loaded shape")
+          ("gen-html",             po::value<bool>(&opts.gen_html)->default_value(false), "Generate HTML for a shape instead of showing app?")
           ("elem-labels,l",        po::value<std::string>(&opts.elem_labels), "Directory/file containing face/point labels to load")
           ("emph-features,e",      "Make feature distributions easier to view")
           ("color-cube,3",         "Map 0-centered 3D feature sets to RGB color-cube, if --emph-features")
@@ -407,6 +419,77 @@ App::createRenderSystem()
   has_render_system = 1;
 }
 
+
+void loadMesh(std::string const & model_path, MeshGroup & mesh_group,
+    Thea::Algorithms::MeshKDTree<Mesh> & kdtree)
+{
+  mesh_group.clearMeshes();
+  kdtree.clear();
+
+  Mesh::resetVertexIndices();  // reset counting
+  Mesh::resetFaceIndices();
+  static CodecOBJ<Mesh> const obj_codec(CodecOBJ<Mesh>::ReadOptions().setIgnoreTexCoords(true));
+  try
+  {
+    if (endsWith(toLower(model_path), ".obj"))
+      mesh_group.load(model_path, obj_codec);
+    else
+      mesh_group.load(model_path);
+  }
+  THEA_STANDARD_CATCH_BLOCKS(return;, ERROR, "Couldn't load model '%s'", model_path.c_str())
+  kdtree.add(mesh_group);
+  kdtree.init();
+}
+
+void
+App::generateHtml()
+{
+  // Load shape features
+  TheaArray< TheaArray<Real> > features;
+  TheaArray<Vector3> feat_pts;
+  load3DFeatures(options().features, feat_pts, features);
+
+  // Load python API and shape resources
+  shared_ptr<PA::PythonApi> python_api = PA::getPythonApi();
+  python_api->loadResources(
+      options().dataset_dir, options().experiment_dir,
+      options().shape_data);
+  TheaArray<PA::Camera> cameras = python_api->getCameras();
+
+  // Load mesh and initialize kdtree
+  std::string model_path = options().model;
+  MeshGroup mesh_group("Mesh Group");
+  Thea::Algorithms::MeshKDTree<Mesh> kdtree;
+  loadMesh(model_path, mesh_group, kdtree);
+  kdtree.setTransform(options().model_transform);
+
+  // kdtree for vertices
+  Thea::Algorithms::KDTreeN<MeshVertex const *, 3> vertex_kdtree;
+  TheaArray<MeshVertex *> verts;
+  CollectVerticesFunctor func(&verts);
+  mesh_group.forEachMeshUntil(&func);
+  vertex_kdtree.init(verts.begin(), verts.end());
+  vertex_kdtree.enableNearestNeighborAcceleration();
+
+  // Generate retrievals for each feature point
+  for (size_t i = 0; i < feat_pts.size(); ++i) {
+    if (i != 1246)
+      continue;
+    THEA_CONSOLE << "Picked feature point " << feat_pts[i];
+    long vertex_index = vertex_kdtree.closestElement<Thea::Algorithms::MetricL2>(feat_pts[i]);
+    const Vector3& vertex_pos = vertex_kdtree.getElements()[vertex_index]->getPosition();
+    THEA_CONSOLE << "Picked point on shape " << vertex_pos;
+    TheaArray<PA::ClickedPoint2D> clicked_points = projectClickedPoint(
+        cameras, vertex_pos, kdtree, true);
+    if (clicked_points.size() == 0) {
+      //THEA_WARNING << "Clicked point was occluded from all views!";
+      continue;
+    }
+
+    python_api->retrieveImages(clicked_points, features[i], true);
+  }
+}
+
 //=============================================================================================================================
 // GUI callbacks etc
 //=============================================================================================================================
@@ -420,17 +503,23 @@ App::OnInit()
   THEA_CONSOLE << "Started MatTrans\n";
   THEA_CONSOLE << optsToString();
 
-  wxImage::AddHandler(new wxPNGHandler);
-  // make sure to call this first
-  wxInitAllImageHandlers();
+  if (opts.gen_html) {
+    // Instead of showing GUI, generate HTML and exit
+    generateHtml();
+    return false;
+  } else {
+    wxImage::AddHandler(new wxPNGHandler);
+    // make sure to call this first
+    wxInitAllImageHandlers();
 
-  createMainWindow();
+    createMainWindow();
 
-  // Load plugins and create a rendersystem
-  loadPlugins();
-  createRenderSystem();
+    // Load plugins and create a rendersystem
+    loadPlugins();
+    createRenderSystem();
 
-  return true;
+    return true;
+  }
 }
 
 bool

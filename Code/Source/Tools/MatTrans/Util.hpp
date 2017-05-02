@@ -110,12 +110,20 @@ bool loadCamera(std::string const & camera_filepath, Graphics::Camera & loaded_c
 // Compute 2D screen coordinates (in [-1, 1]) of a 3D point from a list of cameras
 TheaArray<PA::ClickedPoint2D> projectClickedPoint(
     TheaArray<PA::Camera> const & cameras, Vector3 const & picked_pt,
-    Thea::Algorithms::MeshKDTree<Mesh> const & kdtree);
+    Thea::Algorithms::MeshKDTree<Mesh> const & kdtree, bool verbose = false);
 
 // Load 3D features and feature points associated with a shape
 bool load3DFeatures(
     std::string const & path, TheaArray<Vector3> & feat_pts,
     TheaArray< TheaArray<Real> > & features);
+
+struct CollectVerticesFunctor
+{
+  CollectVerticesFunctor(TheaArray<MeshVertex *> * verts_) : verts(verts_) {}
+  bool operator()(Mesh & mesh);
+
+  TheaArray<MeshVertex *> * verts;
+}; // struct CollectVerticesFunctor
 
 } // namespace MatTrans
 

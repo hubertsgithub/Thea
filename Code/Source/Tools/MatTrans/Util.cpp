@@ -484,7 +484,7 @@ bool loadCamera(std::string const & camera_filepath, Graphics::Camera & loaded_c
 
 TheaArray<PA::ClickedPoint2D> projectClickedPoint(
     TheaArray<PA::Camera> const & cameras, Vector3 const & picked_pt,
-    Thea::Algorithms::MeshKDTree<Mesh> const & kdtree)
+    Thea::Algorithms::MeshKDTree<Mesh> const & kdtree, bool verbose /*= false*/)
 {
   TheaArray<PA::ClickedPoint2D> clicked_points;
   for (TheaArray<PA::Camera>::const_iterator it = cameras.begin(); it != cameras.end(); ++it) {
@@ -494,12 +494,15 @@ TheaArray<PA::ClickedPoint2D> projectClickedPoint(
       continue;
     }
 
-    THEA_CONSOLE << "Loaded camera frame: " << cam.getFrame();
+    if (verbose)
+      THEA_CONSOLE << "Loaded camera frame: " << cam.getFrame();
     // Project the 3D point on the screen corresponding to the camera
     Vector2 pt_2D = cam.project(picked_pt).xy();
-    THEA_CONSOLE << "Clicked point 2D projection: " << pt_2D;
+    if (verbose)
+      THEA_CONSOLE << "Clicked point 2D projection: " << pt_2D;
     if (pt_2D.x() < -1.0 || pt_2D.x() > 1.0 || pt_2D.y() < -1.0 || pt_2D.y() > 1.0) {
-      THEA_CONSOLE << "Clicked point projects outside viewport, skipping!";
+      if (verbose)
+        THEA_CONSOLE << "Clicked point projects outside viewport, skipping!";
       continue;
     }
 
@@ -516,12 +519,14 @@ TheaArray<PA::ClickedPoint2D> projectClickedPoint(
       continue;
     }
     Vector3 pt_3D_backproj = ray.getPoint(t);
-    THEA_CONSOLE << "Back projected point: " << pt_3D_backproj;
+    if (verbose)
+      THEA_CONSOLE << "Back projected point: " << pt_3D_backproj;
     Real dist = (pt_3D_backproj - picked_pt).length();
     // If the original point and the backprojected point are far away, the
     // point is occluded in this view.
     if (dist > 0.01f) {
-      THEA_CONSOLE << "Clicked point occluded in a view!";
+      if (verbose)
+        THEA_CONSOLE << "Clicked point occluded in a view!";
       continue;
     }
     clicked_points.push_back(PA::ClickedPoint2D(it->camera_id, pt_2D));
@@ -601,6 +606,14 @@ bool load3DFeatures(
     }
   }
   return true;
+}
+
+bool CollectVerticesFunctor::operator()(Mesh & mesh)
+{
+  for (Mesh::VertexIterator vi = mesh.verticesBegin(); vi != mesh.verticesEnd(); ++vi)
+    verts->push_back(&(*vi));
+
+  return false;
 }
 
 } // namespace MatTrans

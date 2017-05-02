@@ -1,4 +1,4 @@
-
+import os
 import numpy as np
 
 
@@ -66,4 +66,19 @@ def trafo_coords(qbbox, qsz, rbbox, rsz, qx, qy):
     rx_p, ry_p = qx_bb * rbbox[2] + rbbox[0], qy_bb * rbbox[3] + rbbox[1]
     # Get normalized coordinates in the retrieved image
     return rx_p / rsz[0], ry_p / rsz[1]
+
+
+def ensuredir(dirpath):
+    if os.path.exists(dirpath):
+        return
+
+    try:
+        os.makedirs(dirpath)
+    except OSError as exc:  # Python >2.5
+        import errno
+        if exc.errno == errno.EEXIST and os.path.isdir(dirpath):
+            pass
+        else:
+            raise
+
 
