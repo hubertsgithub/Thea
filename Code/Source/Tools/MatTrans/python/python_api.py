@@ -98,9 +98,13 @@ class PythonApi:
                     qx=qx, qy=qy,
                     shape_view_path=os.path.join(
                         self.experiment_dir, sv.rendered_view_path.encode('utf-8')),
+                    q_img_size=sv.img_size,
+                    q_aspect_ratio=float(sv.img_size[0])/sv.img_size[1],
                     rx=rx, ry=ry,
                     photo_path=os.path.join(
                         self.dataset_dir, pr.photo_path.encode('utf-8')),
+                    r_img_size=pr.img_size,
+                    r_aspect_ratio=float(pr.img_size[0])/pr.img_size[1],
                 ))
                 feat_2D_arr.append(point_feat_2D)
 
@@ -138,24 +142,39 @@ class PythonApi:
         shape_dir = os.path.join(results_dir, str(self.shape.shape_id))
         ensuredir(shape_dir)
 
+        webpage_context = {}
+        webpage_context['photo_data'] = []
         for photo_dic in photo_data:
             # Copy photo files
-            shape_view_target_path = os.path.join(
-                shape_dir, os.path.basename(photo_dic['shape_view_path'])
-            )
+            shape_view_fn = os.path.basename(photo_dic['shape_view_path'])
+            shape_view_target_path = os.path.join(shape_dir, shape_view_fn)
             shutil.copyfile(photo_dic['shape_view_path'], shape_view_target_path)
-            photo_target_path = os.path.join(
-                shape_dir, os.path.basename(photo_dic['photo_path'])
-            )
+            photo_fn = os.path.basename(photo_dic['photo_path'])
+            photo_target_path = os.path.join(shape_dir, photo_fn)
             shutil.copyfile(photo_dic['photo_path'], photo_target_path)
 
-            # Generate and save HTML page for the retrieval results
-            webpage_context = dict(photo_dic)
-            webpage_context['shape_view_path'] = shape_view_target_path
-            webpage_context['photo_path'] = photo_target_path
-            webpage_context['STATIC_URL'] = ''
+            webpage_photo_dic = {}
+            webpage_photo_dic['fet_dist'] = photo_dic['fet_dist']
+            webpage_photo_dic['shape_view'] = dict(
+                image_path=shape_view_fn,
+                px=photo_dic['qx'],
+                px_aspect=photo_dic['qx'] * photo_dic['q_aspect_ratio'],
+                py=photo_dic['qy'],
+                aspect_ratio=photo_dic['q_aspect_ratio'],
+            )
+            webpage_photo_dic['retrieved_photo'] = dict(
+                image_path=photo_fn,
+                px=photo_dic['rx'],
+                px_aspect=photo_dic['rx'] * photo_dic['r_aspect_ratio'],
+                py=photo_dic['ry'],
+                aspect_ratio=photo_dic['r_aspect_ratio'],
+            )
+            webpage_context['photo_data'].append(webpage_photo_dic)
 
-            webpage_raw = self._render_webpage(webpage_context)
-            with open(os.path.join(shape_dir, '%s.html' % self.shape.shape_id), 'w') as fout:
-                fout.write(webpage_raw)
+        # Generate and save HTML page for the retrieval results
+        webpage_context['STATIC_URL'] = ''
+
+        webpage_raw = self._render_webpage(webpage_context)
+        with open(os.path.join(shape_dir, '%s.html' % self.shape.shape_id), 'w') as fout:
+            fout.write(webpage_raw)
 

@@ -1,8 +1,6 @@
-<svg version="1.2" class="fix-aspect" data-id="{{ entry.id }}" data-aspect="{{ entry.aspect_ratio }}" viewBox="0 0 {{ entry.aspect_ratio }} 1" style="width:100%">
-	<image x="0" y="0" width="{{ entry.aspect_ratio }}" height="1" xlink:href="{{ entry.get_intrinsic_synth.gradmag_log_s_image.url }}"/>
+<svg version="1.2" class="fix-aspect" data-aspect="{{ entry.aspect_ratio }}" viewBox="0 0 {{ entry.aspect_ratio }} 1" style="width:100%">
+	<image x="0" y="0" width="{{ entry.aspect_ratio }}" height="1" xlink:href="{{ entry.image_path }}"/>
 	<g transform="scale({{ entry.aspect_ratio }},1)">
-	{% for shape in entry.eq_shading_regions %}
-		<circle class="" cx="{{ entry.point.x_aspect }}" cy="{{ entry.point.y }}" r="0.01" />
-	{% endfor %}
+	<circle class="" cx="{{ entry.px_aspect }}" cy="{{ entry.py }}" r="0.01" />
 	</g>
 </svg>

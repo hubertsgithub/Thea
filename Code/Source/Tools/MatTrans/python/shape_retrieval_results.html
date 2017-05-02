@@ -8,5 +8,25 @@
 	</style>
 </head>
 <body>
+	<table>
+		<tr>
+			<th>Rank</th>
+			<th>Feature Distance</th>
+			<th>Shape View</th>
+			<th>Retrieved Image</th>
+		</tr>
+		{% for photo_dic in photo_data %}
+		<tr>
+			<td>{{ forloop.counter }}</td>
+			<td>{{ photo_dic.fet_dist|floatformat:-2 }}</td>
+			<td>
+			{% include "python/photo_with_point.svg" with entry=photo_dic.shape_view %}
+			</td>
+			<td>
+			{% include "python/photo_with_point.svg" with entry=photo_dic.retrieved_photo %}
+			</td>
+		</tr>
+		{% endfor %}
+	</table>
 </body>
 </html>
