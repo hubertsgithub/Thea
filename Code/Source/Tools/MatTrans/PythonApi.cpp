@@ -145,8 +145,10 @@ TheaArray<Camera> PythonApi::getCameras()
   PYTHON_API_CATCH()
 }
 
-TheaArray<PhotoData> PythonApi::retrieveImages(TheaArray<ClickedPoint2D> const & clicked_points,
-    TheaArray<Real> const & feat_3D, bool do_visualize /* = false */)
+TheaArray<PhotoData> PythonApi::retrieveImages(
+    TheaArray<ClickedPoint2D> const & clicked_points,
+    TheaArray<Real> const & feat_3D, int feat_idx /* = 0 */,
+    int feat_count /* = 0 */, bool do_visualize /* = false */)
 {
   try {
     if (verbose_)
@@ -160,7 +162,7 @@ TheaArray<PhotoData> PythonApi::retrieveImages(TheaArray<ClickedPoint2D> const &
     // Convert feature stored in a vector to a numpy array
     bp::object feat_3D_py = array_to_numpy(feat_3D);
     TheaArray<bp::object> photo_list = toStdVector<bp::object>(
-        self_.attr("retrieve_images")(clicked_points_py, feat_3D_py, do_visualize));
+        self_.attr("retrieve_images")(clicked_points_py, feat_3D_py, feat_idx, feat_count, do_visualize));
     // Convert each python dictionary in list to PhotoData objects
     TheaArray<PhotoData> ret;
     for (TheaArray<bp::object>::const_iterator it = photo_list.begin(); it != photo_list.end(); ++it) {

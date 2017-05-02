@@ -473,20 +473,14 @@ App::generateHtml()
 
   // Generate retrievals for each feature point
   for (size_t i = 0; i < feat_pts.size(); ++i) {
-    if (i != 1246)
-      continue;
-    THEA_CONSOLE << "Picked feature point " << feat_pts[i];
+    //THEA_CONSOLE << "Picked feature point " << feat_pts[i];
     long vertex_index = vertex_kdtree.closestElement<Thea::Algorithms::MetricL2>(feat_pts[i]);
     const Vector3& vertex_pos = vertex_kdtree.getElements()[vertex_index]->getPosition();
-    THEA_CONSOLE << "Picked point on shape " << vertex_pos;
+    //Vector3 vertex_pos(0.115009, 0.734869, -0.224287);
+    //THEA_CONSOLE << "Picked point on shape " << vertex_pos;
     TheaArray<PA::ClickedPoint2D> clicked_points = projectClickedPoint(
-        cameras, vertex_pos, kdtree, true);
-    if (clicked_points.size() == 0) {
-      //THEA_WARNING << "Clicked point was occluded from all views!";
-      continue;
-    }
-
-    python_api->retrieveImages(clicked_points, features[i], true);
+        cameras, vertex_pos, kdtree, false);
+    python_api->retrieveImages(clicked_points, features[i], i, features.size(), true);
   }
 }
 

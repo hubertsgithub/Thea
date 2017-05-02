@@ -170,8 +170,10 @@ class PythonApi
      * Retrieves images which have the most relevant materials based on the
      * clicked 2D points for each rendered view of the current shape.
      */
-    TheaArray<PhotoData> retrieveImages(TheaArray<ClickedPoint2D> const & clicked_points,
-        TheaArray<Real> const & feat_3D, bool do_visualize = false);
+    TheaArray<PhotoData> retrieveImages(
+        TheaArray<ClickedPoint2D> const & clicked_points,
+        TheaArray<Real> const & feat_3D, int feat_idx = 0, int feat_count = 0,
+        bool do_visualize = false);
 
 }; // class PythonApi
 

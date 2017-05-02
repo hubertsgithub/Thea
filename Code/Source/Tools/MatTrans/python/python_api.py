@@ -1,11 +1,12 @@
 import json
 import os
+import shutil
 
 import numpy as np
 
 import app_models
-from utils import bilinear_interpolate, build_idx_dic, load_bbox, trafo_coords, ensuredir
-import shutil
+from utils import (bilinear_interpolate, build_idx_dic, ensuredir, load_bbox,
+                   trafo_coords)
 
 
 class PythonApi:
@@ -48,7 +49,7 @@ class PythonApi:
 
         return camera_dic.values()
 
-    def retrieve_images(self, clicked_points, feat_3D, do_visualize):
+    def retrieve_images(self, clicked_points, feat_3D, feat_idx, feat_count, do_visualize):
         photo_data = []
         feat_2D_arr = []
         for clicked_point in clicked_points:
@@ -71,8 +72,6 @@ class PythonApi:
             qy = (-clicked_point['pt_2D']['y'] + 1) / 2
 
             for pr in sv.photo_retrievals:
-                # TODO: This is incorrect, probably we want to transform the
-                # other way
                 # Align query and retrieved image based on bounding boxes
                 rbbox = load_bbox(os.path.join(self.experiment_dir, pr.bb_path))
                 if self.verbose:
@@ -108,21 +107,24 @@ class PythonApi:
                 ))
                 feat_2D_arr.append(point_feat_2D)
 
-        # Compute distances
-        dists = np.linalg.norm(
-            np.array(feat_2D_arr) - feat_3D[np.newaxis, :], axis=1
-        )
-        # Sort path by closest distance
-        photo_data_sorted = []
-        for idx in np.argsort(dists):
-            pd = dict(photo_data[idx])
-            pd['fet_dist'] = dists[idx]
-            photo_data_sorted.append(pd)
+        if clicked_points:
+            # Compute distances
+            dists = np.linalg.norm(
+                np.array(feat_2D_arr) - feat_3D[np.newaxis, :], axis=1
+            )
+            # Sort path by closest distance
+            photo_data_sorted = []
+            for idx in np.argsort(dists):
+                pd = dict(photo_data[idx])
+                pd['fet_dist'] = dists[idx]
+                photo_data_sorted.append(pd)
 
-        ret = photo_data_sorted[:10]
+            ret = photo_data_sorted[:10]
+        else:
+            ret = []
 
         if do_visualize:
-            self.visualize_retrievals(ret)
+            self.visualize_retrievals(feat_idx, feat_count, ret)
 
         return ret
 
@@ -136,22 +138,38 @@ class PythonApi:
         webpage_raw = t.render(c)
         return webpage_raw
 
-    def visualize_retrievals(self, photo_data):
+    def get_html_fn(self, feat_idx):
+        return 'shape_id_%s-feat_idx-%s.html' % (self.shape.shape_id, feat_idx)
+
+    def visualize_retrievals(self, feat_idx, feat_count, photo_data):
         ''' Generates a HTML page to show the results. '''
         results_dir = 'results'
         shape_dir = os.path.join(results_dir, str(self.shape.shape_id))
         ensuredir(shape_dir)
 
         webpage_context = {}
+        webpage_context['STATIC_URL'] = ''
+        webpage_context['feat_idx'] = feat_idx
+        if feat_idx > 0:
+            webpage_context['prev_page_url'] = self.get_html_fn(feat_idx - 1)
+        else:
+            webpage_context['prev_page_url'] = None
+        if feat_idx < feat_count - 1:
+            webpage_context['next_page_url'] = self.get_html_fn(feat_idx + 1)
+        else:
+            webpage_context['next_page_url'] = None
+
         webpage_context['photo_data'] = []
         for photo_dic in photo_data:
             # Copy photo files
             shape_view_fn = os.path.basename(photo_dic['shape_view_path'])
             shape_view_target_path = os.path.join(shape_dir, shape_view_fn)
-            shutil.copyfile(photo_dic['shape_view_path'], shape_view_target_path)
+            if not os.path.exists(shape_view_target_path):
+                shutil.copyfile(photo_dic['shape_view_path'], shape_view_target_path)
             photo_fn = os.path.basename(photo_dic['photo_path'])
             photo_target_path = os.path.join(shape_dir, photo_fn)
-            shutil.copyfile(photo_dic['photo_path'], photo_target_path)
+            if not os.path.exists(photo_target_path):
+                shutil.copyfile(photo_dic['photo_path'], photo_target_path)
 
             webpage_photo_dic = {}
             webpage_photo_dic['fet_dist'] = photo_dic['fet_dist']
@@ -172,9 +190,6 @@ class PythonApi:
             webpage_context['photo_data'].append(webpage_photo_dic)
 
         # Generate and save HTML page for the retrieval results
-        webpage_context['STATIC_URL'] = ''
-
         webpage_raw = self._render_webpage(webpage_context)
-        with open(os.path.join(shape_dir, '%s.html' % self.shape.shape_id), 'w') as fout:
+        with open(os.path.join(shape_dir, self.get_html_fn(feat_idx)), 'w') as fout:
             fout.write(webpage_raw)
-
