@@ -65,7 +65,7 @@ std::string handle_pyerror()
   return bp::extract<std::string>(formatted);
 }
 
-shared_ptr<PythonApi> getPythonApi()
+shared_ptr<PythonApi> getPythonApi(bool verbose /* = false */)
 {
   Py_Initialize();
   _import_array();
@@ -76,7 +76,7 @@ shared_ptr<PythonApi> getPythonApi()
     bp::object module = bp::import("python_api");
     bp::object pythonApi = module.attr("PythonApi")();
     THEA_CONSOLE << "PythonApi: Created PythonApi python object.";
-    return shared_ptr<PythonApi>(new PythonApi(pythonApi));
+    return shared_ptr<PythonApi>(new PythonApi(pythonApi, verbose));
     //PyObject* self = bp::extract<PyObject*>(pythonApi);
     //return shared_ptr<PythonApi>(new PythonApi(self));
   } catch (bp::error_already_set) {

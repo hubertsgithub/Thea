@@ -149,7 +149,7 @@ class PythonApi
     bool verbose_;
 
   public:
-    PythonApi(bp::object self, bool verbose=true): self_(self), verbose_(verbose) {
+    PythonApi(bp::object self, bool verbose=false): self_(self), verbose_(verbose) {
       if (verbose_)
         THEA_CONSOLE << "PythonApi: Creating PythonApi C++ object...";
     }
@@ -178,7 +178,7 @@ class PythonApi
 
 }; // class PythonApi
 
-shared_ptr<PythonApi> getPythonApi();
+shared_ptr<PythonApi> getPythonApi(bool verbose=false);
 
 } // namespace PA
 
