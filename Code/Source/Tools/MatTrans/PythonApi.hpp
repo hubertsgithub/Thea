@@ -69,22 +69,23 @@ namespace PA {
 
 struct Camera
 {
-  int camera_id;
+  std::string camera_id;
   std::string camera_path;
 
-  Camera(int camera_id, std::string const & camera_path)
+  Camera(std::string const & camera_id, std::string const & camera_path)
     : camera_id(camera_id), camera_path(camera_path) {}
 
   Camera(bp::object dic)
-    : camera_id(bp::extract<int>(dic["camera_id"])), camera_path(bp::extract<std::string>(dic["camera_path"])) {}
+    : camera_id(bp::extract<std::string>(dic["camera_id"])),
+    camera_path(bp::extract<std::string>(dic["camera_path"])) {}
 };
 
 struct ClickedPoint2D
 {
-  int camera_id;
+  std::string camera_id;
   Vector2 pt_2D;
 
-  ClickedPoint2D(int camera_id, Vector2 const & pt_2D)
+  ClickedPoint2D(std::string const & camera_id, Vector2 const & pt_2D)
     : camera_id(camera_id), pt_2D(pt_2D) {}
 
   /**

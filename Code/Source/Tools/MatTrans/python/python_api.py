@@ -40,7 +40,7 @@ class PythonApi:
                 continue
 
             camera_dic[camera_id] = dict(
-                camera_id=camera_id,
+                camera_id=camera_id.encode('utf-8'),
                 camera_path=os.path.join(
                     self.experiment_dir,
                     shape_view.camera_path.encode('utf-8'),
@@ -84,8 +84,11 @@ class PythonApi:
                 if self.verbose:
                     print 'qx: %s, qy: %s, rx: %s, ry: %s' % (qx, qy, rx, ry)
 
+                print pr.photo_id
                 # Get 2D feature for the whole photo
-                feat_2D = self.features_2D[self.photo_id_to_idx[pr.photo_id]]
+                # TODO: Dummy for now
+                #feat_2D = self.features_2D[self.photo_id_to_idx[pr.photo_id]]
+                feat_2D = np.zeros((100, 100, 3))
 
                 # Interpolate feature map
                 point_feat_2D = bilinear_interpolate(

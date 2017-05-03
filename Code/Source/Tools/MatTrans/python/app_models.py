@@ -1,8 +1,10 @@
 
 class AppShape:
-    def __init__(self, shape_id, model_path, shape_view_dic):
+    def __init__(self, shape_id, dataset_split, model_path, shape_view_dic):
         # ID of the shape in Siddhant's database
         self.shape_id = shape_id
+        # Dataset split ('R': train, 'V': val, 'E': test)
+        self.dataset_split = dataset_split
         # Relative path to the .obj file we can use to render this shape
         # (relative to the dataset root directory)
         self.model_path = model_path
@@ -12,6 +14,7 @@ class AppShape:
     def get_dict(self):
         return dict(
             shape_id=self.shape_id,
+            dataset_split=self.dataset_split,
             model_path=self.model_path,
             shape_view_dic={
                 camera_id: sv.get_dict()
@@ -26,10 +29,11 @@ class AppShape:
     def create_from_json(json_data):
         shape_view_dic = {}
         for sv_id, sv_data in json_data['shape_view_dic'].iteritems():
-            shape_view_dic[int(sv_id)] = ShapeView.create_from_json(sv_data)
+            shape_view_dic[sv_id] = ShapeView.create_from_json(sv_data)
 
         return AppShape(
             shape_id=json_data['shape_id'],
+            dataset_split=json_data['dataset_split'],
             model_path=json_data['model_path'],
             shape_view_dic=shape_view_dic,
         )
@@ -86,9 +90,12 @@ class ShapeView:
 
 
 class PhotoRetrieval:
-    def __init__(self, photo_id, photo_path, bb_path, img_size, feature_dist):
+    def __init__(self, photo_id, dataset_split, photo_path, bb_path, img_size,
+                 feature_dist):
         # ID of the retrieved photo in the Mattrans database
         self.photo_id = photo_id
+        # Dataset split ('R': train, 'V': val, 'E': test)
+        self.dataset_split = dataset_split
         # Relative path to the image file (relative to the dataset root directory)
         self.photo_path = photo_path
         # Relative path to the file which contains bounding box information
@@ -103,6 +110,7 @@ class PhotoRetrieval:
     def get_dict(self):
         return dict(
             photo_id=self.photo_id,
+            dataset_split=self.dataset_split,
             photo_path=self.photo_path,
             bb_path=self.bb_path,
             img_size=self.img_size,
@@ -115,7 +123,8 @@ class PhotoRetrieval:
     @staticmethod
     def create_from_json(json_data):
         return PhotoRetrieval(
-            photo_id=json_data['photo_id'],
+            photo_id=int(json_data['photo_id']),
+            dataset_split=json_data['dataset_split'],
             photo_path=json_data['photo_path'],
             bb_path=json_data['bb_path'],
             img_size=json_data['img_size'],
