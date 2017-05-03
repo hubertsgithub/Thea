@@ -51,7 +51,8 @@
 	<table class="table table-bordered table-condensed">
 		<tr>
 			<th>Rank</th>
-			<th>Feature Distance</th>
+			<th>Material Feature Distance</th>
+			<th>HoG Feature Distance</th>
 			<th>Shape View</th>
 			<th>Retrieved Image</th>
 		</tr>
@@ -59,6 +60,7 @@
 		<tr>
 			<td class="big middle">{{ forloop.counter }}</td>
 			<td class="big middle">{{ photo_dic.fet_dist|floatformat:-2 }}</td>
+			<td class="big middle">{{ photo_dic.retrieved_photo.hog_dist|floatformat:-2 }}</td>
 			<td>
 				{% include "python/photo_with_point.svg" with entry=photo_dic.shape_view %}
 			</td>

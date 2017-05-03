@@ -17,7 +17,7 @@ class PythonApi:
         self.shape = None
         self.photo_id_to_idx = None
         self.features_2D = None
-        self.verbose = True
+        self.verbose = False
 
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 
@@ -84,7 +84,6 @@ class PythonApi:
                 if self.verbose:
                     print 'qx: %s, qy: %s, rx: %s, ry: %s' % (qx, qy, rx, ry)
 
-                print pr.photo_id
                 # Get 2D feature for the whole photo
                 # TODO: Dummy for now
                 #feat_2D = self.features_2D[self.photo_id_to_idx[pr.photo_id]]
@@ -107,6 +106,7 @@ class PythonApi:
                         self.dataset_dir, pr.photo_path.encode('utf-8')),
                     r_img_size=pr.img_size,
                     r_aspect_ratio=float(pr.img_size[0])/pr.img_size[1],
+                    hog_dist=pr.feature_dist,
                 ))
                 feat_2D_arr.append(point_feat_2D)
 
@@ -189,6 +189,7 @@ class PythonApi:
                 px_aspect=photo_dic['rx'] * photo_dic['r_aspect_ratio'],
                 py=photo_dic['ry'],
                 aspect_ratio=photo_dic['r_aspect_ratio'],
+                hog_dist=photo_dic['hog_dist'],
             )
             webpage_context['photo_data'].append(webpage_photo_dic)
 
