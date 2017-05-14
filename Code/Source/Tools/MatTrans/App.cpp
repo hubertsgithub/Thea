@@ -471,16 +471,33 @@ App::generateHtml()
   vertex_kdtree.init(verts.begin(), verts.end());
   vertex_kdtree.enableNearestNeighborAcceleration();
 
+  const size_t sample_count = 100;
+  // Randomly shuffle feat_pts, and pick the first x (subsampling, because the
+  // points are too redundant).
+  std::random_shuffle(feat_pts.begin(), feat_pts.end());
+
+  size_t valid_point_count = 0;
   // Generate retrievals for each feature point
   for (size_t i = 0; i < feat_pts.size(); ++i) {
-    //THEA_CONSOLE << "Picked feature point " << feat_pts[i];
-    long vertex_index = vertex_kdtree.closestElement<Thea::Algorithms::MetricL2>(feat_pts[i]);
-    const Vector3& vertex_pos = vertex_kdtree.getElements()[vertex_index]->getPosition();
+    //long vertex_index = vertex_kdtree.closestElement<Thea::Algorithms::MetricL2>(feat_pts[i]);
+    //const Vector3& vertex_pos = vertex_kdtree.getElements()[vertex_index]->getPosition();
     //Vector3 vertex_pos(0.115009, 0.734869, -0.224287);
     //THEA_CONSOLE << "Picked point on shape " << vertex_pos;
+    const Vector3& vertex_pos = feat_pts[i];
     TheaArray<PA::ClickedPoint2D> clicked_points = projectClickedPoint(
         cameras, vertex_pos, kdtree, false);
-    python_api->retrieveImages(clicked_points, features[i], i, features.size(), true);
+    // If all points are occluded, we don't create an HTML page for this point.
+    if (clicked_points.size() == 0) {
+      continue;
+    }
+    python_api->retrieveImages(
+        clicked_points, features[i], valid_point_count, std::min(features.size(), sample_count), true);
+
+    ++valid_point_count;
+    // Quit if we have enough points
+    if (valid_point_count >= sample_count) {
+      break;
+    }
   }
 }
 

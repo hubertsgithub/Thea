@@ -1,8 +1,10 @@
 import argparse
-from functools import partial
+import json
 import multiprocessing
 import os
 import subprocess
+import sys
+from functools import partial
 
 
 # Generate image retrieval results for each shape based on the 2D-3D material
@@ -16,17 +18,24 @@ def main():
     args = parser.parse_args()
 
     os.chdir('../Build')
+    sys.path.insert(0, 'python')
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
     gen_html_results(args)
 
 
+def gen_shape_name(shape_id):
+    return 'benchmark_%.6d' % shape_id
+
+
 def gen_html_func(shape_id, args):
+    shape_name = gen_shape_name(shape_id)
     cmd_args = [
         'Output/bin/MatTrans',
-        os.path.join(args.dataset_dir, 'models/%s/model.obj' % shape_id),
-        '-f', os.path.join(args.experiment_dir, '3D_feats/%s.feat' % shape_id),
+        os.path.join(args.dataset_dir, 'models/%s/model.obj' % shape_name),
+        '-f', os.path.join(args.experiment_dir, '3D_feats/shape-%s.feat' % shape_id),
         '--dataset-dir', args.dataset_dir,
         '--experiment-dir', args.experiment_dir,
-        '--shape-data', os.path.join(args.experiment_dir, 'JSON/shape_data-%s.json' % shape_id),
+        '--shape-data', os.path.join(args.experiment_dir, 'JSON/shape_data-%s.json' % shape_name),
         '--gen-html', 'true',
     ]
     try:
@@ -35,13 +44,44 @@ def gen_html_func(shape_id, args):
         print e
 
 
-def gen_html_results(args):
-    shape_count = 108
+def gen_main_page(args, shape_ids):
+    import utils
+    import app_models
+    # Collect metadata for each shape
+    shape_metadata = []
+    for shape_id in shape_ids:
+        shape_name = gen_shape_name(shape_id)
+        json_path = os.path.join(args.experiment_dir, 'JSON/shape_data-%s.json' % shape_name)
+        shape = app_models.AppShape.create_from_json(json.load(open(json_path)))
+        # Get first shape view file name
+        shape_view_path = shape.shape_view_dic.itervalues().next().rendered_view_path
+        shape_view_fn = os.path.basename(shape_view_path)
+        # Figure out where we copied this image to generate a link to the image
+        shape_view_target_path = os.path.join(shape_name, shape_view_fn)
+        shape_results_link = os.path.join(
+            shape_name, utils.get_html_fn_general(shape_name, 0))
 
-    shape_ids = [
-        'benchmark_%.6d' % (i+1)
-        for i in xrange(shape_count)
-    ]
+        shape_metadata.append(dict(
+            shape_id=shape_id,
+            shape_name=shape_name,
+            shape_view_target_path=shape_view_target_path,
+            shape_results_link=shape_results_link,
+        ))
+
+    # Render page and save
+    webpage_raw = utils.render_webpage_general(
+        webpage_context=dict(shape_metadata=shape_metadata),
+        template_path='python/main_page.html',
+    )
+    with open('results/main_page.html', 'w') as fout:
+        fout.write(webpage_raw)
+
+
+def gen_html_results(args):
+    shape_count = 64
+    shape_ids = [(i+1) for i in xrange(shape_count)]
+    gen_main_page(args=args, shape_ids=shape_ids)
+
     partial_gen_html_func = partial(gen_html_func, args=args)
 
     n_proc = multiprocessing.cpu_count() - 1

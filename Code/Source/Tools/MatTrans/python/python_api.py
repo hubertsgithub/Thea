@@ -5,7 +5,8 @@ import shutil
 import numpy as np
 
 import app_models
-from utils import (bilinear_interpolate, build_idx_dic, ensuredir, load_bbox,
+from utils import (bilinear_interpolate, build_idx_dic, ensuredir,
+                   get_html_fn_general, load_bbox, render_webpage_general,
                    trafo_coords)
 
 
@@ -85,9 +86,7 @@ class PythonApi:
                     print 'qx: %s, qy: %s, rx: %s, ry: %s' % (qx, qy, rx, ry)
 
                 # Get 2D feature for the whole photo
-                # TODO: Dummy for now
-                #feat_2D = self.features_2D[self.photo_id_to_idx[pr.photo_id]]
-                feat_2D = np.zeros((100, 100, 3))
+                feat_2D = self.features_2D[self.photo_id_to_idx[pr.photo_id]]
 
                 # Interpolate feature map
                 point_feat_2D = bilinear_interpolate(
@@ -132,17 +131,13 @@ class PythonApi:
         return ret
 
     def _render_webpage(self, webpage_context):
-        # Running django's template engine...
-        from django.template import Context
-        from django.template.loader import get_template
-        t = get_template('python/shape_retrieval_results.html')
-
-        c = Context(webpage_context)
-        webpage_raw = t.render(c)
-        return webpage_raw
+        return render_webpage_general(
+            webpage_context=webpage_context,
+            template_path='python/shape_retrieval_results.html',
+        )
 
     def get_html_fn(self, feat_idx):
-        return 'shape_id_%s-feat_idx-%s.html' % (self.shape.shape_id, feat_idx)
+        return get_html_fn_general(self.shape.shape_id, feat_idx)
 
     def visualize_retrievals(self, feat_idx, feat_count, photo_data):
         ''' Generates a HTML page to show the results. '''

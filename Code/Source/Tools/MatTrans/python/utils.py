@@ -82,3 +82,16 @@ def ensuredir(dirpath):
             raise
 
 
+def render_webpage_general(webpage_context, template_path):
+    # Running django's template engine...
+    from django.template import Context
+    from django.template.loader import get_template
+    t = get_template(template_path)
+
+    c = Context(webpage_context)
+    webpage_raw = t.render(c)
+    return webpage_raw
+
+
+def get_html_fn_general(shape_name, feat_idx):
+        return 'shape_id_%s-feat_idx-%s.html' % (shape_name, feat_idx)
