@@ -29,9 +29,11 @@ class PythonApi:
         self.shape = app_models.AppShape.create_from_json(json_data)
 
         # Load 2D features for all photos
-        features_2D_data = dict(np.load(os.path.join(experiment_dir, 'img_2D_fets.npz')))
-        self.photo_id_to_idx = build_idx_dic(features_2D_data['ids'])
-        self.features_2D = features_2D_data['features']
+        self.photo_id_to_idx = build_idx_dic(np.load(
+            os.path.join(experiment_dir, 'img_2D_fets/ids.npy')))
+        self.features_2D = np.load(
+            os.path.join(experiment_dir, 'img_2D_fets/features.npy'), mmap_mode='r'
+        )
 
     def get_cameras(self):
         camera_dic = {}
