@@ -29,13 +29,13 @@
 	<table class="table table-bordered table-condensed">
 		<tr>
 			<th>Shape ID</th>
-			<th>Shape Name</th>
+			<th>Dataset Split</th>
 			<th>Shape Results (Click)</th>
 		</tr>
 		{% for sm in shape_metadata %}
 		<tr>
 			<td class="big middle">{{ sm.shape_id }}</td>
-			<td class="big middle">{{ sm.shape_name }}</td>
+			<td class="big middle">{{ sm.dataset_split_pretty }}</td>
 			<td>
 				<a href="{{ sm.shape_results_link }}">
 					<img src="{{ sm.shape_view_target_path }}" alt="" height="300" />

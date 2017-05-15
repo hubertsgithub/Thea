@@ -64,6 +64,7 @@ def gen_main_page(args, shape_ids):
         shape_metadata.append(dict(
             shape_id=shape_id,
             shape_name=shape_name,
+            dataset_split_pretty={'R': 'Train', 'V': 'Validation', 'E': 'Test'}[shape.dataset_split],
             shape_view_target_path=shape_view_target_path,
             shape_results_link=shape_results_link,
         ))
