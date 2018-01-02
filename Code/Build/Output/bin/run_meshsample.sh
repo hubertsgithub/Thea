@@ -1,4 +1,4 @@
 #!/bin/bash
 
-./MeshSample -s10 $@
+./MeshSample -s20 $@
 
