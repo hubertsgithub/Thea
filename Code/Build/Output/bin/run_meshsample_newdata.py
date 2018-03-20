@@ -3,10 +3,13 @@ import os
 import subprocess
 
 script = '/mnt/data/projects-hubert/Thea/Code/Build/Output/bin/run_meshsample.sh'
-root_dir = '/home/hlin/projects/caffe/data/mattrans/900/mvcnn_renderings/trainset'
-list_of_shapes = '/home/hlin/projects/caffe/data/mattrans/900/mvcnn_renderings/sorted_meshes_according_to_percentage_group_labeled.txt'
+#root_dir = '/home/hlin/projects/caffe/data/mattrans/900/mvcnn_renderings/trainset'
+root_dir = '/home/hlin/projects/caffe/data/mattrans/900/mvcnn_renderings/benchmark-new'
+list_of_shapes = None
+#list_of_shapes = '/home/hlin/projects/caffe/data/mattrans/900/mvcnn_renderings/sorted_meshes_according_to_percentage_group_labeled.txt'
+#list_of_shapes = '/home/hlin/projects/caffe/data/mattrans/900/mvcnn_renderings/sorted_meshes_according_to_percentage_group_labeled.txt'
 
-if os.path.exists(list_of_shapes):
+if list_of_shapes is not None and  os.path.exists(list_of_shapes):
     print 'Reading input shapes from {}...'.format(list_of_shapes)
     input_dirs = []
     threshold = 0.5  # Only keep shapes which are at least <threshold> labeled.
@@ -36,36 +39,46 @@ print 'Total number of shapes: {}'.format(num_shapes)
 num_samples = int(75 * 2615 / (0.9 * num_shapes))
 
 ## Manually set number of samples
-num_samples = 250
+num_samples_list = [512, 1024]
 
-print 'Sampling {} points per shape.'.format(num_samples)
-raw_input('Press any key to begin...')
-print '-------------------------------------'
+for num_samples in num_samples_list:
+    print 'Sampling {} points per shape.'.format(num_samples)
+    raw_input('Press any key to begin...')
+    print '-------------------------------------'
 
-count = 0
-for input_dir in input_dirs:
-    count += 1
-    if '.' in input_dir:
-        continue
+    count = 0
+    for input_dir in input_dirs:
+        count += 1
+        if '.' in input_dir:
+            continue
+        if 'point' in input_dir or 'duplicate' in input_dir:
+            continue
 
-    shapename = input_dir.strip().split('/')[-1]
+        if '126' not in input_dir:
+            #print 'skipping {}'.format(input_dir)
+            continue
 
-    output_name = os.path.join(input_dir, '{}_fixed_{}.pts'.format(shapename, num_samples))
-    if os.path.isfile(output_name):
-        print 'Fixed file exists. Skipping {}...'.format(input_dir)
-        continue
+        shapename = input_dir.strip().split('/')[-1]
+
+        #output_name = os.path.join(input_dir, '{}_fixed_{}.pts'.format(shapename, num_samples))
+        output_name = os.path.join(input_dir, '{}_{}.pts'.format(shapename, num_samples))
+        #if os.path.isfile(output_name):
+        #    print 'Fixed file exists. Skipping {}...'.format(input_dir)
+        #    continue
 
 
-    print 'Working on {}...'.format(input_dir)
+        print 'Working on {}...'.format(input_dir)
 
-    call = ' '.join([script,
-                     '-n{}'.format(num_samples),
-                     '-l {}'.format(os.path.join(input_dir, '{}_fixed.labels'.format(shapename))),
-                     os.path.join(input_dir, '{}_fixed.obj'.format(shapename)),
-                     output_name])
+        call = ' '.join([script,
+                        '-n{}'.format(num_samples),
+                        #'-l {}'.format(os.path.join(input_dir, '{}_fixed.labels'.format(shapename))),
+                        #os.path.join(input_dir, '{}_fixed.obj'.format(shapename)),
+                        '-l {}'.format(os.path.join(input_dir, 'model.labels'.format(shapename))),
+                        os.path.join(input_dir, 'model.obj'.format(shapename)),
+                        output_name])
 
-    print '   Calling {}'.format(call)
-    subprocess.call(call, shell=True)
+        print '   Calling {}'.format(call)
+        subprocess.call(call, shell=True)
 
-    print '*** Finished: {}'.format(count)
+        print '*** Finished: {}'.format(count)
 
